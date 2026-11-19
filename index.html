@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strum &amp; Sing</title>
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Strum &amp; Sing"><meta name="theme-color" content="#5b2a1e">
+<link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: a patient guitar-and-voice teacher; short, warm, plain words; bold for the one thing to remember.
+IDEA: the guitar itself — the lesson path is a rosewood neck with frets; tools behave like a clip-on tuner and a practice notebook.
+PICTURE: each tool opens on its working instrument: the tuner dial, the live pitch line, the chord box, the beat strip.
+COLOUR and TYPE: white ground, rosewood dominant, spruce support, one teal "in tune" accent; blue = too low, orange = too high. Lexend for easy reading.
+LAYOUT: one calm column (max 760px), bottom tab bar on phones, big 48px targets, stacked controls below 600px.
+*/
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#161110);--panel:light-dark(#f6f4f1,#211a17);--panel2:light-dark(#eeeae5,#2b221e);
+--ink:light-dark(#1f1714,#f4ece6);--muted:light-dark(#6b605a,#b8aaa1);--line:light-dark(#e3ddd6,#3b302b);
+--wood:light-dark(#5b2a1e,#7a3b2a);--wood2:light-dark(#43201a,#5d2c20);--woodink:#fff7f0;
+--spruce:light-dark(#f3ddb0,#e6c88e);--fret:light-dark(#cfc8c0,#b9aea6);
+--ok:light-dark(#0b8a7a,#3ccbb4);--okbg:light-dark(#e2f4f1,#123a34);
+--low:light-dark(#2a62d4,#7aa4ff);--high:light-dark(#d4531c,#ff8d58);--warnbg:light-dark(#fff0e7,#3d2418);
+--tabon:light-dark(#5b2a1e,#e6c88e);--r:16px}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{scroll-padding-top:72px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 Lexend,system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:clip;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+button,input,select{font:inherit;color:inherit}
+input[type=checkbox]{accent-color:var(--wood)}
+b,strong{font-weight:700}u{text-decoration-thickness:2px;text-underline-offset:3px}
+.wrap{max-width:760px;margin:0 auto;padding:0 max(4vw,16px)}
+header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;gap:10px;min-height:58px}
+.brand{font-weight:700;font-size:19px;display:flex;align-items:center;gap:8px;flex:1;text-decoration:none;color:inherit}
+.brand svg{flex:none}
+.chip-mic{font-size:13px;padding:4px 10px;border-radius:99px;background:var(--panel2);color:var(--muted);white-space:nowrap}
+.chip-mic.live{background:var(--okbg);color:var(--ok)}
+.iconbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none;text-decoration:none;font-size:22px}
+.iconbtn svg{width:24px;height:24px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--bg);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs .wrap{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:0}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 2px 8px;font-size:12.5px;color:var(--muted);text-decoration:none;min-height:60px}
+nav.tabs a[aria-current=page]{color:var(--tabon);font-weight:700}
+nav.tabs svg{width:26px;height:26px}
+h1{font-size:clamp(28px,6vw,40px);line-height:1.08;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:22px;line-height:1.2;margin:0 0 10px}
+h3{font-size:18px;margin:0 0 6px}
+p{margin:0 0 12px}
+.sub{color:var(--muted);font-size:15px}
+.band{padding-top:22px;padding-bottom:22px}
+.card{background:var(--panel);border-radius:var(--r);padding:16px;margin:0 0 14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 18px;border-radius:14px;border:0;background:var(--wood);color:var(--woodink);font-weight:600;cursor:pointer;text-decoration:none;text-align:center}
+.btn.alt{background:var(--panel2);color:var(--ink)}
+.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn.ok{background:var(--ok);color:#fff}
+.btn.big{min-height:56px;font-size:18px;padding:12px 22px}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.on{background:var(--ok);color:#fff}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row>.grow{flex:1 1 160px}
+:focus-visible{outline:3px solid var(--ok);outline-offset:2px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;min-height:44px;padding:8px 15px;border-radius:99px;border:1.5px solid var(--line);background:var(--bg);cursor:pointer;font-size:15.5px;white-space:nowrap}
+.chips button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chips button .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-left:6px;vertical-align:middle}
+/* today band */
+.today{background:var(--wood);color:var(--woodink);border-radius:0 0 26px 26px;padding:22px 0 18px;position:relative;overflow:hidden}
+.today::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;border:26px solid rgba(255,255,255,.06)}
+.today h1{color:var(--woodink)}
+.today .sub{color:color-mix(in srgb,var(--woodink) 75%,transparent)}
+.plan{list-style:none;margin:14px 0 4px;padding:0;display:grid;gap:8px;position:relative;z-index:1}
+.plan li{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.08);border-radius:14px;padding:6px 8px 6px 6px}
+.plan .tick{width:44px;height:44px;border-radius:50%;border:2.5px solid var(--spruce);background:transparent;flex:none;cursor:pointer;display:grid;place-items:center;color:var(--wood2)}
+.plan li.done .tick{background:var(--spruce)}
+.plan li.done .lbl{opacity:.7;text-decoration:line-through}
+.plan .lbl{flex:1;font-size:16px;line-height:1.3}
+.plan .lbl small{display:block;opacity:.75;font-size:13px}
+.plan .go{min-height:44px;padding:6px 14px;border-radius:12px;border:0;background:var(--spruce);color:#3a1d14;font-weight:700;cursor:pointer}
+.streak{display:flex;gap:18px;margin-top:12px;font-size:14px;position:relative;z-index:1;flex-wrap:wrap}
+.streak b{font-size:22px;display:block;line-height:1}
+/* lesson path: a guitar neck */
+.path{position:relative;margin-top:8px}
+.unit{position:relative;padding-left:58px}
+.unit::before{content:"";position:absolute;left:14px;top:0;bottom:0;width:30px;background:linear-gradient(90deg,var(--wood2),var(--wood) 45%,var(--wood2));}
+.unit:first-child::before{border-radius:10px 10px 0 0;border-top:7px solid var(--spruce)}
+.unit:last-child::before{border-radius:0 0 10px 10px}
+.unit h3{padding:16px 0 6px;color:var(--muted);font-size:14px;font-weight:600;position:relative}
+.unit h3::before{content:"";position:absolute;left:-37px;top:20px;width:12px;height:12px;border-radius:50%;background:var(--spruce);box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.fret{position:relative;display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 12px;margin:0 0 8px;border-radius:14px;background:var(--panel);border:0;cursor:pointer;min-height:60px;text-decoration:none;color:inherit}
+.fret::before{content:"";position:absolute;left:-44px;width:30px;top:50%;height:3px;background:var(--fret);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+.fret .num{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px;background:var(--bg);border:2px solid var(--line);flex:none}
+.fret.done .num{background:var(--ok);border-color:var(--ok);color:#fff}
+.fret.now{outline:2.5px solid var(--wood);background:var(--bg)}
+.fret .t{flex:1;line-height:1.3}
+.fret .t small{display:block;color:var(--muted);font-size:13px}
+/* lesson */
+.lesson .back{margin:14px 0 6px}
+.pts{list-style:none;padding:0;margin:14px 0;display:grid;gap:12px}
+.pts li{background:var(--panel);border-radius:14px;padding:12px 14px 12px 48px;position:relative;font-size:17.5px;line-height:1.55}
+.pts li::before{content:counter(p);counter-increment:p;position:absolute;left:12px;top:12px;width:26px;height:26px;border-radius:50%;background:var(--spruce);color:#3a1d14;font-weight:700;font-size:14px;display:grid;place-items:center}
+.pts{counter-reset:p}
+.art{margin:12px 0;background:var(--panel);border-radius:var(--r);padding:12px;overflow:hidden}
+.art svg{display:block;width:100%;height:auto}
+.keys{display:flex;gap:3px;height:118px;position:relative;margin-top:8px;user-select:none;-webkit-user-select:none}
+.keys button{flex:1;border:1px solid var(--line);border-radius:0 0 8px 8px;background:#fff;color:#333;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;font-size:13px;cursor:pointer}
+.keys button.blk{position:absolute;top:0;height:62%;background:#2a201c;color:#eee;border-radius:0 0 6px 6px;z-index:2;font-size:11px}
+.keys.many button{font-size:9.5px;padding-bottom:5px}
+.keys button.hit{background:var(--spruce)}.keys button.blk.hit{background:var(--wood)}
+.keys button.inr{background:color-mix(in srgb,var(--ok) 28%,#fff)}
+/* tuner */
+.tuner{display:grid;place-items:center;padding:8px 0 4px}
+.tuner svg{width:min(100%,460px);height:auto;display:block}
+.needle{transition:transform .12s linear;transform-origin:200px 210px}
+@media(prefers-reduced-motion:reduce){.needle{transition:none}}
+.readout{text-align:center;margin-top:-8px}
+.readout .nn{font-size:64px;font-weight:700;line-height:1}
+.readout .hint{font-size:20px;font-weight:600;min-height:32px}
+.strings{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:14px 0}
+.strings.six{grid-template-columns:repeat(6,minmax(0,1fr))}
+.strings button{min-height:56px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);cursor:pointer;line-height:1.1;font-weight:700;font-size:17px}
+.strings button small{display:block;font-size:11px;font-weight:400;color:var(--muted)}
+.strings button[aria-pressed=true]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.strings button[aria-pressed=true] small{color:inherit}
+.strings button.good{box-shadow:inset 0 -5px 0 var(--ok)}
+.c-ok{color:var(--ok)}.c-low{color:var(--low)}.c-high{color:var(--high)}
+/* pitch trace */
+.fig{position:relative;min-height:300px;background:var(--panel);border-radius:var(--r);overflow:hidden}
+.fig>canvas{position:absolute;inset:0;width:100%;height:100%}
+.fig .over{position:absolute;right:12px;top:10px;text-align:right;pointer-events:none}
+.fig .over .nn{font-size:40px;font-weight:700;line-height:1}
+.fig .over .cc{font-size:15px;font-weight:600}
+.fig .msg{position:absolute;left:12px;bottom:10px;right:12px;font-size:15px;color:var(--muted);pointer-events:none}
+.hold{height:12px;border-radius:99px;background:var(--panel2);overflow:hidden;margin:10px 0}
+.hold i{display:block;height:100%;width:0;background:var(--ok);transition:width .1s}
+.bubbles{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.bubbles button{min-width:48px;min-height:52px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);cursor:pointer;line-height:1.1;padding:4px 8px}
+.bubbles button small{display:block;font-size:11px;color:var(--muted)}
+.bubbles button.cur{border-color:var(--wood);border-width:3px}
+.bubbles button.ok{background:var(--okbg);border-color:var(--ok)}
+.bubbles button.lo{background:color-mix(in srgb,var(--low) 14%,var(--bg));border-color:var(--low)}
+.bubbles button.hi{background:var(--warnbg);border-color:var(--high)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
+.stats div{background:var(--panel);border-radius:14px;padding:10px;text-align:center;font-size:13px;color:var(--muted)}
+.stats b{display:block;font-size:24px;color:var(--ink)}
+/* chords */
+.chordwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:center}
+@media(max-width:600px){.chordwrap{grid-template-columns:1fr}}
+.cbox{background:var(--panel);border-radius:var(--r);padding:10px;display:grid;place-items:center}
+.cbox svg{width:min(100%,280px);height:auto}
+.cname{font-size:48px;font-weight:700;line-height:1}
+.result{border-radius:14px;padding:12px 14px;margin:12px 0;font-size:17px}
+.result.good{background:var(--okbg)}.result.close,.result.other{background:var(--warnbg)}.result.info{background:var(--panel)}
+.result ul{margin:6px 0 0;padding-left:20px}
+.timer{font-size:72px;font-weight:700;text-align:center;line-height:1;font-variant-numeric:tabular-nums}
+.countbtn{width:100%;min-height:120px;font-size:34px;border-radius:20px}
+.spark{display:block;width:100%;height:44px}
+/* rhythm */
+.beats{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;margin:12px 0}
+.beats div{border-radius:12px;background:var(--panel);text-align:center;padding:8px 0 6px;font-size:13px;color:var(--muted)}
+.beats div b{display:block;font-size:30px;line-height:1.1;color:var(--ink)}
+.beats div.on{background:var(--wood);color:var(--woodink)}.beats div.on b{color:var(--woodink)}
+.beats div.air b{opacity:.25}
+.bpm{display:flex;align-items:center;gap:10px;justify-content:center}
+.bpm .v{font-size:56px;font-weight:700;min-width:110px;text-align:center;font-variant-numeric:tabular-nums;line-height:1}
+input[type=range]{width:100%;accent-color:var(--wood);height:32px}
+.nowchord{display:flex;align-items:baseline;gap:14px;justify-content:center;min-height:64px}
+.nowchord b{font-size:54px;line-height:1}
+.pad{width:100%;min-height:130px;border-radius:22px;font-size:24px;border:0;background:var(--panel2);cursor:pointer;touch-action:manipulation}
+.pad:active{background:var(--spruce)}
+/* progress */
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+.kpis div{background:var(--panel);border-radius:16px;padding:14px 10px;text-align:center;font-size:13px;color:var(--muted)}
+.kpis b{display:block;font-size:30px;color:var(--ink);line-height:1.1}
+.bars{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:end;height:130px;margin:8px 0 4px}
+.bars div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:12px;color:var(--muted);gap:4px}
+.bars i{display:block;width:70%;background:var(--wood);border-radius:6px 6px 2px 2px;min-height:3px}
+.bars div.cur i{background:var(--ok)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{padding:9px 6px;border-bottom:1px solid var(--line);text-align:left}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.set{display:grid;gap:14px}
+.set label{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.fallback{border:2px dashed var(--line);border-radius:var(--r);padding:14px;margin:12px 0}
+.fallback h3{margin-bottom:4px}
+.hidden{display:none!important}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:14px;z-index:50;font-size:15px;max-width:90vw;text-align:center}
+.breath{display:grid;place-items:center;gap:10px;padding:8px}
+.breath .ball{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--spruce),var(--wood));transform:scale(.55);transition:transform 4s ease-in-out}
+.breath .say{font-size:22px;font-weight:700;min-height:34px}
+.chart{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.chart div{background:var(--bg);border-radius:12px;padding:8px;text-align:center}
+.chart b{font-size:26px;display:block}
+.chart span{font-size:14px;color:var(--muted)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media(max-width:600px){h1{font-size:30px}.readout .nn{font-size:56px}.timer{font-size:60px}}
+
+</style></head><body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="#learn"><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c7 0 12 3 12 8 0 8-7 16-12 18C11 27 4 19 4 11c0-5 5-8 12-8z" fill="var(--wood)"/><path d="M11 12h10M11 16h10M11 20h8" stroke="var(--spruce)" stroke-width="2" stroke-linecap="round"/></svg>Strum &amp; Sing</a>
+  <span id="micchip" class="chip-mic">Mic off</span>
+  <a class="iconbtn" id="progbtn" href="#progress" aria-label="Progress and settings"></a>
+</div></header>
+<main id="view"></main>
+<nav class="tabs" aria-label="Main"><div class="wrap" id="tabs"></div></nav>
+<div id="toast" class="toast hidden" role="status"></div>
+<span id="probe" class="vh" aria-hidden="true"></span>
+<script>
+{
+/* ===== DSP: pitch (YIN) + chord check (chroma + per-string evidence) ===== */
+const DSP = (() => {
+  const NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+  const state = { a4: 440 };
+  const f2m = (f) => 69 + 12 * Math.log2(f / state.a4);
+  const m2f = (m) => state.a4 * Math.pow(2, (m - 69) / 12);
+  const pc = (m) => ((Math.round(m) % 12) + 12) % 12;
+  const name = (m) => NAMES[pc(m)] + (Math.floor(Math.round(m) / 12) - 1);
+  const pcName = (p) => NAMES[((p % 12) + 12) % 12];
+
+  function rms(b, from = 0, to = b.length) {
+    let s = 0; for (let i = from; i < to; i++) s += b[i] * b[i];
+    return Math.sqrt(s / Math.max(1, to - from));
+  }
+
+  /* YIN (de Cheveigné & Kawahara 2002): difference fn -> cumulative mean
+     normalised difference -> absolute threshold -> parabolic interpolation */
+  let dBuf = new Float32Array(0), cBuf = new Float32Array(0);
+  function yin(buf, sr, opt = {}) {
+    const fmin = opt.fmin || 60, fmax = opt.fmax || 1100, th = opt.threshold || 0.12;
+    const N = buf.length;
+    const tauMax = Math.min(Math.floor(sr / fmin), Math.floor(N / 2));
+    const tauMin = Math.max(2, Math.floor(sr / fmax));
+    const W = N - tauMax;
+    if (dBuf.length < tauMax + 2) { dBuf = new Float32Array(tauMax + 2); cBuf = new Float32Array(tauMax + 2); }
+    const d = dBuf, c = cBuf;
+    for (let t = 1; t <= tauMax; t++) {
+      let s = 0;
+      for (let j = 0; j < W; j++) { const x = buf[j] - buf[j + t]; s += x * x; }
+      d[t] = s;
+    }
+    c[0] = 1; let run = 0;
+    for (let t = 1; t <= tauMax; t++) { run += d[t]; c[t] = run > 0 ? d[t] * t / run : 1; }
+    let tau = -1;
+    for (let t = tauMin; t < tauMax; t++) {
+      if (c[t] < th) { while (t + 1 < tauMax && c[t + 1] < c[t]) t++; tau = t; break; }
+    }
+    if (tau < 0) { // no dip under threshold: take the first dip close to the deepest one
+      let best = tauMin;
+      for (let t = tauMin; t < tauMax; t++) if (c[t] < c[best]) best = t;
+      if (c[best] > 0.3) return { f0: 0, clarity: 1 - c[best] };
+      const lim = c[best] + 0.06;
+      for (let t = tauMin; t <= best; t++) if (c[t] < lim) { while (t + 1 < tauMax && c[t + 1] < c[t]) t++; tau = t; break; }
+    }
+    let bt = tau;
+    if (tau > 1 && tau < tauMax) {
+      const s0 = c[tau - 1], s1 = c[tau], s2 = c[tau + 1], den = s0 + s2 - 2 * s1;
+      if (Math.abs(den) > 1e-12) bt = tau + (s0 - s2) / (2 * den);
+    }
+    return { f0: sr / bt, clarity: 1 - c[tau] };
+  }
+
+  /* Smoother: median of recent readings (in cents) with jump rejection */
+  function makeSmoother(size = 5) {
+    const hist = []; let miss = 0;
+    return {
+      push(f0) {
+        if (!f0) { if (++miss > 3) hist.length = 0; return hist.length ? median() : 0; }
+        miss = 0;
+        const m = f2m(f0);
+        if (hist.length >= 3) {
+          const med = f2m(median());
+          // a lone octave jump is usually a detection slip: wait for confirmation
+          if (Math.abs(m - med) > 7 && !this._pend) { this._pend = m; return median(); }
+          if (this._pend && Math.abs(m - this._pend) > 1) { this._pend = 0; return median(); }
+          if (this._pend) { hist.length = 0; this._pend = 0; }
+        }
+        hist.push(f0); if (hist.length > size) hist.shift();
+        return median();
+      },
+      reset() { hist.length = 0; this._pend = 0; }
+    };
+    function median() { const s = hist.slice().sort((a, b) => a - b); return s[s.length >> 1]; }
+  }
+
+  /* Radix-2 FFT magnitude with Hann window */
+  function fftMag(x) {
+    let N = 1; while (N < x.length) N <<= 1;
+    const re = new Float64Array(N), im = new Float64Array(N);
+    for (let i = 0; i < x.length; i++) re[i] = x[i] * (0.5 - 0.5 * Math.cos(2 * Math.PI * i / (x.length - 1)));
+    for (let i = 1, j = 0; i < N; i++) {
+      let bit = N >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit;
+      if (i < j) { let t = re[i]; re[i] = re[j]; re[j] = t; }
+    }
+    for (let len = 2; len <= N; len <<= 1) {
+      const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+      for (let i = 0; i < N; i += len) {
+        let cr = 1, ci = 0;
+        for (let k = 0; k < len / 2; k++) {
+          const a = i + k, b = a + len / 2;
+          const tr = re[b] * cr - im[b] * ci, ti = re[b] * ci + im[b] * cr;
+          re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+          const nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr;
+        }
+      }
+    }
+    const mag = new Float32Array(N / 2);
+    for (let k = 0; k < N / 2; k++) mag[k] = Math.hypot(re[k], im[k]);
+    return { mag, N };
+  }
+
+  /* Peak energy near a frequency (±cents), from a magnitude spectrum */
+  function bandPeak(mag, N, sr, f, cents = 35) {
+    const lo = Math.max(1, Math.floor(f * Math.pow(2, -cents / 1200) * N / sr));
+    const hi = Math.min(mag.length - 1, Math.ceil(f * Math.pow(2, cents / 1200) * N / sr));
+    let m = 0; for (let k = lo; k <= hi; k++) if (mag[k] > m) m = mag[k];
+    return m;
+  }
+
+  function chroma(mag, N, sr, fmin = 70, fmax = 1500) {
+    const ch = new Float64Array(12);
+    const k0 = Math.ceil(fmin * N / sr), k1 = Math.floor(fmax * N / sr);
+    let floor = 0; for (let k = k0; k <= k1; k++) floor += mag[k]; floor /= (k1 - k0 + 1);
+    for (let k = k0; k <= k1; k++) {
+      const v = mag[k] - 2 * floor; if (v <= 0) continue;
+      const m = f2m(k * sr / N), r = Math.round(m), dev = m - r;
+      ch[((r % 12) + 12) % 12] += v * Math.exp(-(dev * dev) / 0.045);
+    }
+    const mx = Math.max(...ch) || 1;
+    return Array.from(ch, (v) => v / mx);
+  }
+
+  /* Spectral peaks (parabolic-interpolated) between fmin..fmax */
+  function peaks(mag, N, sr, fmin = 70, fmax = 2600) {
+    const k0 = Math.max(3, Math.ceil(fmin * N / sr)), k1 = Math.min(mag.length - 3, Math.floor(fmax * N / sr));
+    let mx = 0; for (let k = k0; k <= k1; k++) if (mag[k] > mx) mx = mag[k];
+    const sorted = Array.from(mag.subarray(k0, k1)).sort((a, b) => a - b);
+    const floor = sorted[sorted.length >> 1] || 0;
+    const out = [];
+    for (let k = k0; k <= k1; k++) {
+      const v = mag[k];
+      if (v < mx * 0.03 || v < floor * 6) continue;
+      if (!(v > mag[k - 1] && v >= mag[k + 1] && v >= mag[k - 2] && v >= mag[k + 2])) continue;
+      const a = mag[k - 1], b = v, c = mag[k + 1], den = a - 2 * b + c;
+      const dk = den ? 0.5 * (a - c) / den : 0;
+      out.push({ f: (k + dk) * sr / N, a: v / mx });
+    }
+    return out;
+  }
+  const near = (f, g, cents) => Math.abs(1200 * Math.log2(f / g)) < cents;
+  /* share of peak energy explained by the harmonic series of the given notes */
+  function explain(pk, notes) {
+    let tot = 0, got = 0; const left = [];
+    for (const p of pk) {
+      tot += p.a;
+      let ok = false;
+      for (const m of notes) { const f = m2f(m); const h = Math.round(p.f / f); if (h >= 1 && h <= 12 && near(p.f, h * f, 30 + 2 * h)) { ok = true; break; } }
+      if (ok) got += p.a; else left.push(p);
+    }
+    return { score: tot ? got / tot : 0, left, leftE: tot ? 1 - got / tot : 0 };
+  }
+
+  /* Open-string MIDI notes, string 6 (low E) .. string 1 (high E) */
+  const OPEN = [40, 45, 50, 55, 59, 64];
+  const notesOf = (shape) => shape.map((f, i) => (f >= 0 ? OPEN[i] + f : null)).filter((m) => m !== null);
+
+  /* Check a strummed chord against its shape.
+     shape: 6 entries for string 6..1: -1 = don't play, 0 = open, n = fret.
+     library: {label: shape} of other chords, used for "sounds more like". */
+  function checkChord(samples, sr, shape, label, library = {}, T = {}) {
+    const tLeft = T.left ?? 0.1, tGain = T.gain ?? 0.05, tClose = T.close ?? 0.2, tRel = T.rel ?? 0;
+    const loud = rms(samples) > 0.002;
+    const { mag, N } = fftMag(samples);
+    const pk = peaks(mag, N, sr);
+    const want = notesOf(shape);
+    const base = explain(pk, want);
+    const pkAt = (f) => pk.reduce((m, p) => (near(p.f, f, 35) && p.a > m ? p.a : m), 0);
+    // per-string evidence
+    const strings = shape.map((fr, i) => {
+      const s = 6 - i;
+      if (fr < 0) return { s, state: 'skip' };
+      const m = OPEN[i] + fr, f = m2f(m);
+      const masked = want.some((o) => o < m && [2, 3, 4, 5, 6, 8].some((h) => near(f, h * m2f(o), 25)));
+      let e = pkAt(f);
+      if (f < 125 && e < 0.05) { // phone mics are weak in the bass: accept a clear 2nd harmonic
+        const masked2 = want.some((o) => o !== m && o < m + 12 && [1, 2, 3, 4, 5, 6].some((h) => near(2 * f, h * m2f(o), 25)));
+        if (!masked2) e = Math.max(e, pkAt(2 * f));
+      }
+      if (masked) return { s, state: 'shared', e };
+      return { s, state: e < 0.04 ? 'quiet' : 'ok', e };
+    });
+    // which single mistake best explains leftover peaks?
+    let fix = null;
+    if (base.leftE > tLeft) {
+      shape.forEach((fr, i) => {
+        const s = 6 - i, cands = [];
+        if (fr < 0) cands.push({ m: OPEN[i], why: `string ${s} is ringing — don't strum it`, kind: 'ring' });
+        if (fr > 0) {
+          cands.push({ m: OPEN[i] + fr + 1, why: `string ${s}: finger is one fret too high`, kind: 'fret' });
+          cands.push({ m: OPEN[i] + fr - 1, why: `string ${s}: finger is one fret too low`, kind: 'fret' });
+          if (fr > 1) cands.push({ m: OPEN[i], why: `string ${s}: finger isn't pressing — the open string sounds`, kind: 'open' });
+        }
+        for (const c of cands) {
+          const notes = fr < 0 ? want.concat(c.m) : want.map((m) => (m === OPEN[i] + fr ? c.m : m));
+          const r = explain(pk, notes);
+          const gain = r.score - base.score;
+          if (gain > tGain && gain / base.leftE > tRel && (!fix || gain > fix.gain)) fix = { s, gain, why: c.why, kind: c.kind, note: pcName(c.m) };
+        }
+      });
+    }
+    // does a different chord from the library fit much better?
+    let other = null;
+    for (const [lab, sh] of Object.entries(library)) {
+      if (lab === label) continue;
+      const r = explain(pk, notesOf(sh));
+      if (r.score > base.score + 0.12 && (!other || r.score > other.score)) other = { label: lab, score: r.score };
+    }
+    const quiet = strings.filter((x) => x.state === 'quiet').map((x) => x.s);
+    let verdict;
+    if (!loud || pk.length < 3) verdict = 'silent';
+    else if (other && (!fix || other.score > base.score + fix.gain + 0.05)) verdict = 'other';
+    else if (fix || quiet.length || base.leftE > tClose) verdict = 'close';
+    else verdict = 'good';
+    return { verdict, fit: base.score, other: other && other.label, fix, quiet, strings, peaks: pk.length };
+  }
+
+  /* Track pitch across a whole recording (file mode) */
+  function track(samples, sr, opt = {}) {
+    let x = samples, rate = sr;
+    if (sr > 30000) { // halve the rate: cheaper, still fine below 1.1 kHz
+      x = new Float32Array(samples.length >> 1);
+      for (let i = 0; i < x.length; i++) x[i] = 0.5 * (samples[2 * i] + samples[2 * i + 1]);
+      rate = sr / 2;
+    }
+    const win = opt.win || Math.round(rate * 0.046), hop = Math.round(rate * 0.02);
+    let peak = 0; for (let i = 0; i < x.length; i += 64) peak = Math.max(peak, Math.abs(x[i]));
+    const gate = Math.max(0.004, peak * 0.06);
+    const out = [];
+    for (let i = 0; i + win <= x.length; i += hop) {
+      const fr = x.subarray(i, i + win);
+      const r = rms(fr); let f0 = 0;
+      if (r > gate) { const y = yin(fr, rate, opt); if (y.clarity > 0.6) f0 = y.f0; }
+      out.push({ t: i / rate, f0, r });
+    }
+    // 5-frame median in the pitch domain removes lone octave slips
+    const m = out.map((o) => (o.f0 ? f2m(o.f0) : 0));
+    for (let i = 0; i < out.length; i++) {
+      if (!m[i]) continue;
+      const w = []; for (let j = i - 2; j <= i + 2; j++) if (m[j]) w.push(m[j]);
+      if (w.length >= 3) { w.sort((a, b) => a - b); const med = w[w.length >> 1]; if (Math.abs(m[i] - med) > 6) out[i].f0 = m2f(med); }
+    }
+    return out;
+  }
+
+  return { NAMES, state, f2m, m2f, pc, name, pcName, rms, yin, makeSmoother, fftMag, chroma, peaks, explain, checkChord, track, OPEN, notesOf };
+})();
+
+
+/* ===== Course content ===== */
+const CHORDS = {
+  Em: { shape: [0, 2, 2, 0, 0, 0], fingers: [0, 2, 3, 0, 0, 0], tip: 'Only <b>two fingers</b>. Strum <b>all six</b> strings.' },
+  E: { shape: [0, 2, 2, 1, 0, 0], fingers: [0, 2, 3, 1, 0, 0], tip: 'E minor plus <b>finger 1</b> on the G string.' },
+  A: { shape: [-1, 0, 2, 2, 2, 0], fingers: [0, 0, 1, 2, 3, 0], tip: 'Three fingers <b>in a row</b> at fret 2. Skip string 6.' },
+  D: { shape: [-1, -1, 0, 2, 3, 2], fingers: [0, 0, 0, 1, 3, 2], tip: 'A <b>triangle</b> shape. Start strumming on <b>string 4</b>.' },
+  Am: { shape: [-1, 0, 2, 2, 1, 0], fingers: [0, 0, 2, 3, 1, 0], tip: 'Same shape as E, moved <b>one string</b> towards the floor.' },
+  C: { shape: [-1, 3, 2, 0, 1, 0], fingers: [0, 3, 2, 0, 1, 0], tip: 'A <b>diagonal</b> line of fingers. Keep string 3 ringing open.' },
+  G: { shape: [3, 2, 0, 0, 0, 3], fingers: [2, 1, 0, 0, 0, 3], tip: 'Fingers 1 and 2 low, <b>finger 3</b> on the thin string.' },
+  Dm: { shape: [-1, -1, 0, 2, 3, 1], fingers: [0, 0, 0, 2, 3, 1], tip: 'Like D, but finger 1 drops to <b>fret 1</b> on string 1.' },
+  A7: { shape: [-1, 0, 2, 0, 2, 0], fingers: [0, 0, 2, 0, 3, 0], tip: 'An A with the <b>G string open</b>. Bluesy.' },
+  D7: { shape: [-1, -1, 0, 2, 1, 2], fingers: [0, 0, 0, 2, 1, 3], tip: 'An upside-down D triangle.' },
+  E7: { shape: [0, 2, 0, 1, 0, 0], fingers: [0, 2, 0, 1, 0, 0], tip: 'E with <b>finger 3 lifted</b>.' },
+  Fmaj7: { shape: [-1, -1, 3, 2, 1, 0], fingers: [0, 0, 3, 2, 1, 0], tip: 'An easy stand-in for F. Skip strings 6 and 5.' }
+};
+const CHORD_ORDER = ['Em', 'A', 'D', 'E', 'Am', 'G', 'C', 'Dm', 'A7', 'D7', 'E7', 'Fmaj7'];
+const STRING_NAMES = ['E', 'A', 'D', 'G', 'B', 'E']; // string 6..1
+
+/* 8 slots = 1 & 2 & 3 & 4 & ; D = down, U = up, '' = hand moves but misses */
+const PATTERNS = {
+  beats: { name: 'Down on the beat', slots: ['D', '', 'D', '', 'D', '', 'D', ''] },
+  eighths: { name: 'Down-up', slots: ['D', 'U', 'D', 'U', 'D', 'U', 'D', 'U'] },
+  faithful: { name: 'Old faithful', slots: ['D', '', 'D', 'U', '', 'U', 'D', 'U'] },
+  folk: { name: 'Folk', slots: ['D', '', 'D', 'U', 'D', '', 'D', 'U'] }
+};
+const PROGRESSIONS = {
+  none: { name: 'No chords', chords: [] },
+  dae: { name: 'D · A · E · A', chords: ['D', 'A', 'E', 'A'] },
+  emc: { name: 'Em · C · G · D', chords: ['Em', 'C', 'G', 'D'] },
+  gcd: { name: 'G · C · D · G', chords: ['G', 'C', 'D', 'G'] },
+  amg: { name: 'Am · G · C · E', chords: ['Am', 'G', 'C', 'E'] }
+};
+
+/* Melodies as semitones from the key note (all public domain). */
+const MELODIES = {
+  five: { name: 'Five-step scale', notes: [0, 2, 4, 5, 7, 5, 4, 2, 0], syl: ['do', 're', 'mi', 'fa', 'so', 'fa', 'mi', 're', 'do'] },
+  three: { name: 'Three steps', notes: [0, 2, 4, 2, 0], syl: ['do', 're', 'mi', 're', 'do'] },
+  twinkle: { name: 'Twinkle, twinkle', notes: [0, 0, 7, 7, 9, 9, 7, 5, 5, 4, 4, 2, 2, 0], syl: ['Twin', 'kle', 'twin', 'kle', 'lit', 'tle', 'star', 'how', 'I', 'won', 'der', 'what', 'you', 'are'] },
+  ode: { name: 'Ode to Joy', notes: [4, 4, 5, 7, 7, 5, 4, 2, 0, 0, 2, 4, 4, 2, 2], syl: ['mi', 'mi', 'fa', 'so', 'so', 'fa', 'mi', 're', 'do', 'do', 're', 'mi', 'mi', 're', 're'] },
+  jacques: { name: 'Frère Jacques', notes: [0, 2, 4, 0, 0, 2, 4, 0, 4, 5, 7, 4, 5, 7], syl: ['Frè', 're', 'Jac', 'ques', 'frè', 're', 'Jac', 'ques', 'dor', 'mez', 'vous', 'dor', 'mez', 'vous'] }
+};
+
+/* Ear game: interval names with a well-known song start to remember them by */
+const INTERVALS = [
+  { st: 2, name: 'Step (2nd)', cue: '“Hap-py birth-” — the 2nd and 3rd notes' },
+  { st: 3, name: 'Small jump (minor 3rd)', cue: '“Greensleeves” — first two notes' },
+  { st: 4, name: 'Bright jump (major 3rd)', cue: '“Oh when the saints” — first two notes' },
+  { st: 5, name: 'Fourth', cue: '“Here comes the bride” — first two notes' },
+  { st: 7, name: 'Fifth', cue: '“Twinkle, twinkle” — “twin” to the second “twin”' },
+  { st: 12, name: 'Octave', cue: 'The same note, higher — two singers an octave apart' }
+];
+
+/* tool shortcuts used by lessons: {v: view, ...preset} */
+const UNITS = ['Hear and hold', 'First sounds', 'Three chords', 'Sing in tune', 'Play and sing'];
+const LESSONS = [
+  { id: 'pitch', u: 0, t: 'What a note is', min: 5, art: 'wave',
+    pts: ['A note is a sound that <b>vibrates at a steady speed</b>. Faster = <b>higher</b>. Slower = <b>lower</b>.', 'The speed is counted in <b>Hz</b> (vibrations each second). The note <b>A</b> is 440 Hz.', 'There are only <b>12 notes</b>. Then they repeat, higher. That jump is an <u>octave</u>.', 'Tap the keys below. Hear how each one is a little higher.'],
+    go: [{ l: 'Play: higher or lower?', v: 'sing', mode: 'ear', ear: 'hl' }] },
+  { id: 'range', u: 0, t: 'Find your voice', min: 4, art: 'range',
+    pts: ['Everyone has a <b>comfortable range</b> — the notes you can sing <i>without pushing</i>.', 'Sing an easy <b>“ah”</b>. Slide <b>down</b> slowly to your lowest easy note. Then slide <b>up</b>.', '<b>Never strain.</b> If it scratches or squeaks, that’s past your edge for today.', 'The app uses your range to pick notes and songs that fit <b>you</b>.'],
+    go: [{ l: 'Measure my range', v: 'sing', mode: 'range' }] },
+  { id: 'guitar', u: 0, t: 'Meet the guitar', min: 5, art: 'guitar',
+    pts: ['Strings are numbered <b>6 (thick, low)</b> to <b>1 (thin, high)</b>.', 'Their names, thick to thin: <b>E A D G B E</b> — “<b>E</b>ddie <b>A</b>te <b>D</b>ynamite, <b>G</b>ood <b>B</b>ye <b>E</b>ddie”.', 'The metal bars are <b>frets</b>. Pressing a string behind a fret makes it <b>higher</b>.', 'Sit up. Guitar body on your leg, neck tilted <b>slightly up</b>. Relax your shoulders.', 'Tap a string in the picture to hear it.'],
+    go: [] },
+  { id: 'tune', u: 0, t: 'Tune up', min: 4, art: 'none',
+    pts: ['Tune <b>every time</b> you pick up the guitar. Strings drift.', 'Pluck one string. Turn its peg <b>slowly</b> and watch the needle.', 'Needle left = <b>too low</b>, tighten. Needle right = <b>too high</b>, loosen.', 'Tip: if you’re too high, go <u>below</u> the note and come back <b>up</b>. It holds better.'],
+    go: [{ l: 'Open the tuner', v: 'tune' }] },
+  { id: 'breath', u: 1, t: 'Breathe and warm up', min: 5, art: 'breath',
+    pts: ['Stand tall, shoulders down. Breathe in <b>low</b> — your belly moves out, not your shoulders.', 'Breathe out on a long <b>“sss”</b>. Try to make it last <b>10 counts</b>.', '<b>Lip trills</b> (“brrr”) and <b>humming</b> are gentle warm-ups singers and voice teachers use.', 'Do a slow <b>siren</b>: slide from low to high and back on a lip trill. Watch the line follow you.'],
+    go: [{ l: 'Siren: see my voice', v: 'sing', mode: 'free' }] },
+  { id: 'match', u: 1, t: 'Match one note', min: 6, art: 'none',
+    pts: ['Listen to the note. <b>Hear it in your head</b>, then sing “oo” or “ah”.', 'Watch the line. <b>Under the band = too low</b>, slide up. <b>Over it = too high</b>.', 'Hold it inside the band for <b>2 seconds</b>.', 'Most people who think they “can’t sing” just haven’t <i>linked hearing to their voice</i> yet. Seeing your pitch helps build that link.'],
+    go: [{ l: 'Start matching', v: 'sing', mode: 'match' }] },
+  { id: 'chordbox', u: 1, t: 'Read a chord box', min: 4, art: 'chordbox',
+    pts: ['A chord box is the guitar <b>standing up, facing you</b>. Lines down = strings, lines across = frets.', 'Dots show where fingers go. The number is <b>which finger</b>: 1 index, 2 middle, 3 ring, 4 little.', '<b>O</b> = play the string open. <b>X</b> = don’t play it.', 'Press with your <b>fingertips</b>, just <u>behind</u> the fret. Curve your fingers so they don’t touch other strings.'],
+    go: [{ l: 'Look at E minor', v: 'chords', chord: 'Em' }] },
+  { id: 'em', u: 1, t: 'Your first chord: E minor', min: 6, art: 'none',
+    pts: ['Put fingers <b>2 and 3</b> on fret 2 of strings 5 and 4. Strum <b>all six</b>.', 'Check it <b>string by string</b>: pluck each one slowly. Every note should ring.', 'Sore fingertips are <b>normal</b> for the first few weeks. They toughen up.', 'Several <b>short sessions</b> (10–15 min) beat one long one while your fingers adapt.'],
+    go: [{ l: 'Check my E minor', v: 'chords', chord: 'Em', act: 'perfect' }] },
+  { id: 'ad', u: 2, t: 'A and D', min: 8, art: 'none',
+    pts: ['<b>A</b>: three fingers side by side on fret 2. Don’t strum string 6.', '<b>D</b>: a triangle on the thin strings. Strum only strings <b>4 to 1</b>.', 'Form the shape, strum, then <b>lift and place it again</b>. Repeat 5 times each.'],
+    go: [{ l: 'Learn A', v: 'chords', chord: 'A' }, { l: 'Learn D', v: 'chords', chord: 'D' }] },
+  { id: 'omc', u: 2, t: 'E, and changing fast', min: 8, art: 'none',
+    pts: ['Learn <b>E</b> — it is E minor plus finger 1.', 'The <b>one-minute change</b>: pick two chords, switch back and forth for 60 seconds and <b>count</b>.', 'Write the number down. Beat it next time. Aim for <b>30</b>, then <b>40+</b> in a minute.', 'Do the pairs <b>D–A</b>, <b>A–E</b> and <b>D–E</b>, one minute each.'],
+    go: [{ l: 'Learn E', v: 'chords', chord: 'E' }, { l: 'One-minute change: D–A', v: 'chords', chord: 'D', omc: ['D', 'A'] }] },
+  { id: 'beat', u: 2, t: 'Strum in time', min: 6, art: 'none',
+    pts: ['The <b>beat</b> is the steady pulse you tap your foot to. <b>Tempo</b> = beats per minute (BPM).', 'Count out loud: <b>“1, 2, 3, 4”</b>. Strum <b>down</b> on every number.', 'Keep your hand moving like a <b>pendulum</b>, even when you don’t hit the strings.', 'Then try the <b>tap test</b>: tap with the click and see how steady you are.'],
+    go: [{ l: 'Metronome at 60', v: 'rhythm', bpm: 60, pat: 'beats' }] },
+  { id: 'pattern', u: 2, t: 'Your first strum pattern', min: 8, art: 'none',
+    pts: ['“<b>Old faithful</b>”: down, down-up, up-down-up.', 'Say it while you play: <b>“1, 2 &, & 4 &”</b>.', 'The gaps are <b>air strums</b>: your hand still moves, it just misses the strings.', 'Start at <b>60 BPM</b>. Only speed up when it feels boring.'],
+    go: [{ l: 'Practise the pattern', v: 'rhythm', bpm: 60, pat: 'faithful', prog: 'dae' }] },
+  { id: 'scale', u: 3, t: 'Steps of a scale', min: 6, art: 'none',
+    pts: ['A scale is a <b>staircase</b> of notes: <b>do re mi fa so</b>.', 'Sing one step at a time. The app <b>waits for you</b> on each note.', '<b>Slow is accurate.</b> Studies find casual singers get much closer to the note when they slow down.'],
+    go: [{ l: 'Sing the steps', v: 'sing', mode: 'song', mel: 'five' }] },
+  { id: 'ear', u: 3, t: 'Hear the gaps', min: 6, art: 'none',
+    pts: ['The jump between two notes is an <b>interval</b>.', 'Start easy: <b>higher or lower?</b> Then: <b>which jump was it?</b>', 'Link each jump to a <b>song you know</b>. That makes it stick.'],
+    go: [{ l: 'Higher or lower', v: 'sing', mode: 'ear', ear: 'hl' }, { l: 'Name the jump', v: 'sing', mode: 'ear', ear: 'iv' }] },
+  { id: 'melody', u: 3, t: 'Sing a melody', min: 8, art: 'none',
+    pts: ['<b>Ode to Joy</b> moves mostly in <b>steps</b> — great for a first tune.', 'Tap a note bubble to <b>hear it</b> again whenever you need.', 'When it gets easy, set the band to <b>tighter</b> in Progress → Settings.'],
+    go: [{ l: 'Sing Ode to Joy', v: 'sing', mode: 'song', mel: 'ode' }] },
+  { id: 'gcam', u: 4, t: 'G, C and A minor', min: 10, art: 'none',
+    pts: ['Three new shapes. Learn one per day if you like.', 'Use <b>string by string</b> to find the string that doesn’t ring.', 'Then one-minute changes: <b>G–C</b>, <b>C–Am</b>, <b>Am–G</b>.'],
+    go: [{ l: 'Learn G', v: 'chords', chord: 'G' }, { l: 'Learn C', v: 'chords', chord: 'C' }, { l: 'Learn Am', v: 'chords', chord: 'Am' }] },
+  { id: 'root', u: 4, t: 'Sing on the chord', min: 6, art: 'none',
+    pts: ['Every chord has a <b>home note</b> — the one in its name. The home note of G is <b>G</b>.', 'Strum the chord, then <b>hum its home note</b>. The app checks you.', 'This links your <b>hands and voice</b>: the core skill for singing while you play.'],
+    go: [{ l: 'Sing the home note', v: 'sing', mode: 'match', drone: true }] },
+  { id: 'song', u: 4, t: 'Your first song', min: 12, art: 'song',
+    pts: ['<b>Twinkle, twinkle</b> with <b>G, C and D</b>. One chord per bar.', 'Step 1: <b>sing</b> the melody alone. Step 2: <b>strum</b> the chords alone.', 'Step 3: both, <b>very slowly</b>. One strum per chord is fine to start.'],
+    go: [{ l: 'Sing the melody', v: 'sing', mode: 'song', mel: 'twinkle' }, { l: 'Strum along: G · C · D', v: 'rhythm', bpm: 60, pat: 'beats', prog: 'gcd' }] }
+];
+const SONG_CHART = [['G', 'Twin-kle, twin-kle'], ['C', 'lit-tle'], ['G', 'star,'], ['C', 'how I'], ['G', 'won-der'], ['D', 'what you'], ['G', 'are.']];
+
+/* ===== Audio: sounds out (tones, guitar, clicks) and sound in (mic / recordings) ===== */
+const Audio = (() => {
+  let ctx = null, master = null, voiceWave = null;
+  const ksCache = new Map();
+  function ac() {
+    if (!ctx) {
+      const C = window.AudioContext || window.webkitAudioContext;
+      ctx = new C({ latencyHint: 'interactive' });
+      master = ctx.createGain(); master.gain.value = 0.8; master.connect(ctx.destination);
+      const real = new Float32Array([0, 1, 0.55, 0.3, 0.18, 0.1, 0.06]);
+      voiceWave = ctx.createPeriodicWave(real, new Float32Array(real.length));
+    }
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    return ctx;
+  }
+  /* a soft, voice-like reference tone */
+  function tone(midi, dur = 1.2, when = 0, vol = 0.32) {
+    const c = ac(), t = c.currentTime + 0.02 + when;
+    const o = c.createOscillator(), g = c.createGain(), lp = c.createBiquadFilter();
+    o.setPeriodicWave(voiceWave); o.frequency.value = DSP.m2f(midi);
+    lp.type = 'lowpass'; lp.frequency.value = 2200;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.05);
+    g.gain.setValueAtTime(vol, t + dur - 0.15); g.gain.linearRampToValueAtTime(0, t + dur);
+    o.connect(lp); lp.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+    return t + dur;
+  }
+  /* Karplus–Strong plucked string, rendered once per note */
+  function ksBuffer(midi) {
+    const key = Math.round(midi * 100);
+    if (ksCache.has(key)) return ksCache.get(key);
+    const c = ac(), sr = c.sampleRate, dur = 2.4, n = Math.round(sr * dur);
+    const P = sr / DSP.m2f(midi) + 0.5, L = Math.floor(P), frac = P - L, C = (1 - frac) / (1 + frac);
+    const ring = new Float32Array(L);
+    let s = 7 + key; const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647) * 2 - 1;
+    for (let i = 0; i < L; i++) ring[i] = rnd();
+    for (let k = 0; k < 2; k++) for (let i = 1; i < L; i++) ring[i] = 0.5 * (ring[i] + ring[i - 1]); // softer pluck
+    const b = c.createBuffer(1, n, sr), y = b.getChannelData(0);
+    let idx = 0, apx = 0, apy = 0; const damp = midi < 50 ? 0.997 : 0.995;
+    for (let i = 0; i < n; i++) {
+      const a = ring[idx], nx = ring[(idx + 1) % L];
+      const v = 0.5 * (a + nx) * damp;
+      const ap = C * v + apx - C * apy; apx = v; apy = ap;
+      ring[idx] = ap; y[i] = a * 0.5; idx = (idx + 1) % L;
+    }
+    ksCache.set(key, b); return b;
+  }
+  function pluck(midi, when = 0, vol = 0.6) {
+    const c = ac(), src = c.createBufferSource(), g = c.createGain();
+    src.buffer = ksBuffer(midi); g.gain.value = vol;
+    src.connect(g); g.connect(master); src.start(c.currentTime + 0.02 + when);
+  }
+  function strum(shape, when = 0, up = false) {
+    const idx = [0, 1, 2, 3, 4, 5]; if (up) idx.reverse();
+    let k = 0;
+    idx.forEach((i) => { if (shape[i] >= 0) pluck(DSP.OPEN[i] + shape[i], when + 0.018 * k++, 0.42); });
+  }
+  function click(when, accent) {
+    const c = ac(), o = c.createOscillator(), g = c.createGain();
+    o.frequency.value = accent ? 1660 : 1100;
+    g.gain.setValueAtTime(0.0001, when); g.gain.exponentialRampToValueAtTime(accent ? 0.5 : 0.3, when + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+    o.connect(g); g.connect(master); o.start(when); o.stop(when + 0.06);
+  }
+
+  /* ---- Microphone ---- */
+  const mic = { stream: null, an: null, buf: null, live: false, blocked: false, why: '' };
+  async function micStart() {
+    if (mic.live) return true;
+    if (mic.blocked) return false;
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('unsupported');
+      const c = ac();
+      mic.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      const src = c.createMediaStreamSource(mic.stream);
+      mic.an = c.createAnalyser(); mic.an.fftSize = 32768; mic.an.smoothingTimeConstant = 0;
+      src.connect(mic.an);
+      mic.buf = new Float32Array(mic.an.fftSize);
+      mic.live = true; return true;
+    } catch (e) {
+      mic.blocked = true; mic.why = (e && e.name) || 'blocked'; return false;
+    }
+  }
+  function micStop() {
+    if (mic.stream) mic.stream.getTracks().forEach((t) => t.stop());
+    mic.stream = null; mic.an = null; mic.live = false;
+  }
+  /* latest n samples, downsampled by 2 when the rate is high (cheaper YIN) */
+  function micFrame(n, half = true) {
+    if (!mic.an) return null;
+    mic.an.getFloatTimeDomainData(mic.buf);
+    const sr = ctx.sampleRate, ds = half && sr > 30000 ? 2 : 1;
+    const out = new Float32Array(n), start = mic.buf.length - n * ds;
+    for (let i = 0; i < n; i++) out[i] = ds === 2 ? 0.5 * (mic.buf[start + 2 * i] + mic.buf[start + 2 * i + 1]) : mic.buf[start + i];
+    return { x: out, sr: sr / ds };
+  }
+  function micRaw() { if (!mic.an) return null; mic.an.getFloatTimeDomainData(mic.buf); return { x: mic.buf.slice(), sr: ctx.sampleRate }; }
+
+  /* ---- Recordings (voice memo / video) ---- */
+  async function decodeFile(file) {
+    const c = ac(), data = await file.arrayBuffer();
+    const b = await new Promise((res, rej) => { const p = c.decodeAudioData(data, res, rej); if (p && p.then) p.then(res, rej); });
+    const n = b.length, x = new Float32Array(n);
+    for (let ch = 0; ch < b.numberOfChannels; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < n; i++) x[i] += d[i] / b.numberOfChannels; }
+    return { x, sr: b.sampleRate, dur: b.duration };
+  }
+  return { ac, tone, pluck, strum, click, mic, micStart, micStop, micFrame, micRaw, decodeFile, now: () => ac().currentTime };
+})();
+
+/* ===== App core: helpers, storage, router, Learn path, lessons ===== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const dayKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const view = $('#view');
+let toastT = 0;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.remove('hidden'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), 2600); }
+
+/* ---------- storage: this device first, your account when available ---------- */
+const KEY = 'strum-sing-v1';
+const DEF = () => ({ v: 1, updated: 0, done: {}, days: {}, omc: {}, sing: [], ear: { hl: 7, sd: 100, iv: 2, best: 0 }, range: null, set: { a4: 440, tol: 50, left: false, voice: '' }, plan: { date: '', ticks: {} } });
+function merge(base, v) { const o = DEF(); for (const k in o) if (v && v[k] !== undefined) o[k] = (typeof o[k] === 'object' && o[k] && !Array.isArray(o[k])) ? Object.assign(o[k], v[k]) : v[k]; return o; }
+let S = DEF();
+try { const raw = localStorage.getItem(KEY); if (raw) S = merge(DEF(), JSON.parse(raw)); } catch (e) { /* storage unavailable */ }
+DSP.state.a4 = S.set.a4;
+let remote = null, rBusy = false, rDirty = false, rT = 0, syncWhere = 'device';
+function save() {
+  S.updated = Date.now();
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ }
+  if (remote) { rDirty = true; clearTimeout(rT); rT = setTimeout(flush, 5000); }
+}
+async function flush() {
+  if (!remote || rBusy || !rDirty) return;
+  rBusy = true; rDirty = false;
+  try { await remote.set(JSON.parse(JSON.stringify(S))); syncWhere = 'account'; } catch (e) { syncWhere = 'device'; }
+  rBusy = false; if (rDirty) flush();
+}
+const within = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+async function initRemote() {
+  if (!window.claude || typeof window.claude.use !== 'function') return;
+  try {
+    const [db, user] = await within(Promise.all([window.claude.use('db'), window.claude.use('user')]), 10000);
+    if (!db || !user) return;
+    const id = await within(user.id(), 10000);
+    const ref = db.collection('data/users/' + id).doc('progress');
+    const snap = await within(ref.get(), 10000);
+    let v = snap; if (v && typeof v.data === 'function') v = v.data(); else if (v && v.data && typeof v.data === 'object') v = v.data;
+    remote = ref; syncWhere = 'account';
+    if (v && v.updated && v.updated > S.updated) { S = merge(DEF(), v); DSP.state.a4 = S.set.a4; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* */ } route(); }
+    else if (S.updated) { rDirty = true; flush(); }
+  } catch (e) { remote = null; syncWhere = 'device'; }
+}
+
+/* ---------- practice time: tools ping while you're actually playing/singing ---------- */
+let lastPing = 0, planCtx = null;
+function activity(kind) {
+  const now = Date.now(), dt = lastPing ? Math.min(10, (now - lastPing) / 1000) : 1; lastPing = now;
+  const d = dayKey(); const day = S.days[d] || (S.days[d] = { s: 0, k: {} });
+  day.s += dt; day.k[kind] = (day.k[kind] || 0) + dt;
+  if (planCtx && S.plan.date === d) { planCtx.secs += dt; if (planCtx.secs > 45 && !S.plan.ticks[planCtx.id]) { S.plan.ticks[planCtx.id] = 1; toast('Ticked off today’s list ✓'); } }
+  if (!activity.t) activity.t = setTimeout(() => { activity.t = 0; save(); }, 4000);
+}
+function streak() {
+  let n = 0; const d = new Date();
+  if (!(S.days[dayKey(d)] && S.days[dayKey(d)].s >= 60)) d.setDate(d.getDate() - 1);
+  while (S.days[dayKey(d)] && S.days[dayKey(d)].s >= 60) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+
+/* ---------- read aloud (Claude voice in the browser, device voice elsewhere) ---------- */
+let ttsP = null;
+async function speak(text, btn) {
+  try {
+    if (!ttsP && window.claude && window.claude.use) ttsP = window.claude.use('tts');
+    const t = ttsP ? await ttsP : null;
+    if (t) { btn && (btn.textContent = 'Reading…'); await t.speak(text, { rate: 0.95 }).catch(() => {}); btn && (btn.textContent = 'Read it to me'); return; }
+  } catch (e) { /* fall through */ }
+  if ('speechSynthesis' in window) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = 0.92; speechSynthesis.speak(u); }
+  else toast('Reading aloud isn’t available here');
+}
+
+/* ---------- small SVG icons ---------- */
+const ICON = {
+  learn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/></svg>',
+  tune: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 16a9 9 0 0 1 18 0"/><path d="M12 16l4-6"/><circle cx="12" cy="16" r="1.5" fill="currentColor"/></svg>',
+  sing: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  chords: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9.7 3v18M14.3 3v18M5 8.5h14M5 14h14"/><circle cx="12" cy="11.2" r="1.6" fill="currentColor"/></svg>',
+  rhythm: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8l-3-17h-2zM12 14l5-6"/></svg>',
+  progress: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  check: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>'
+};
+
+/* ---------- router ---------- */
+let leaveFns = [];
+function onLeave(fn) { leaveFns.push(fn); }
+let preset = null;
+function go(p) { preset = p; const h = p.v === 'lesson' ? 'lesson-' + p.id : p.v; if (location.hash.slice(1) === h) route(); else location.hash = h; }
+function route() {
+  leaveFns.forEach((f) => { try { f(); } catch (e) { /* */ } }); leaveFns = [];
+  const h = location.hash.slice(1) || 'learn';
+  const tab = h.startsWith('lesson-') ? 'learn' : h;
+  $$('nav.tabs a').forEach((a) => { if (a.dataset.v === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  const p = preset || {}; preset = null;
+  if (!p.fromPlan) planCtx = null;
+  window.scrollTo(0, 0);
+  if (h.startsWith('lesson-')) return renderLesson(h.slice(7));
+  ({ learn: renderLearn, tune: renderTune, sing: renderSing, chords: renderChords, rhythm: renderRhythm, progress: renderProgress }[h] || renderLearn)(p);
+}
+function micChip() { const c = $('#micchip'); c.className = 'chip-mic' + (Audio.mic.live ? ' live' : ''); c.textContent = Audio.mic.live ? 'Mic on' : Audio.mic.blocked ? 'Record mode' : 'Mic off'; }
+
+/* ---------- Learn: today's plan + the neck ---------- */
+const learnedChords = () => { const set = new Set(); LESSONS.forEach((l) => { if (S.done[l.id]) l.go.forEach((g) => { if (g.chord) set.add(g.chord); }); }); return CHORD_ORDER.filter((c) => set.has(c)); };
+function todayPlan() {
+  const d = dayKey(); if (S.plan.date !== d) { S.plan = { date: d, ticks: {} }; }
+  const cur = LESSONS.find((l) => !S.done[l.id]) || LESSONS[LESSONS.length - 1];
+  const items = [{ id: 'warm', l: 'Warm up: voice siren', m: 2, go: { v: 'sing', mode: 'free' } }];
+  if (S.done.guitar) items.push({ id: 'tune', l: 'Tune your guitar', m: 1, go: { v: 'tune' } });
+  items.push({ id: 'lesson', l: 'Lesson: ' + cur.t, m: cur.min, go: { v: 'lesson', id: cur.id } });
+  const lc = learnedChords();
+  if (lc.length >= 2) {
+    let best = null;
+    for (let i = 0; i < lc.length; i++) for (let j = i + 1; j < lc.length; j++) {
+      const k = lc[i] + '-' + lc[j], h = S.omc[k] || []; const top = h.length ? Math.max(...h.map((x) => x.n)) : -1;
+      if (!best || top < best.top) best = { a: lc[i], b: lc[j], top };
+    }
+    items.push({ id: 'omc', l: `One-minute change: ${best.a}–${best.b}`, m: 2, go: { v: 'chords', chord: best.a, omc: [best.a, best.b] } });
+  } else if (S.done.match) items.push({ id: 'rev', l: 'Match 5 notes', m: 3, go: { v: 'sing', mode: 'match' } });
+  items.push({ id: 'ear', l: 'Ear game', m: 2, go: { v: 'sing', mode: 'ear', ear: S.done.ear ? 'iv' : 'hl' } });
+  return items;
+}
+function weekMinutes() { let s = 0; const d = new Date(); for (let i = 0; i < 7; i++) { const k = dayKey(d); s += (S.days[k] && S.days[k].s) || 0; d.setDate(d.getDate() - 1); } return Math.round(s / 60); }
+function renderLearn() {
+  const plan = todayPlan(), done = LESSONS.filter((l) => S.done[l.id]).length;
+  const cur = LESSONS.find((l) => !S.done[l.id]);
+  const total = plan.reduce((a, b) => a + b.m, 0);
+  view.innerHTML = `
+  <section class="today"><div class="wrap">
+    <h1>Today’s practice</h1>
+    <p class="sub">About ${total} minutes. Fingers sore? Split it into two short sessions.</p>
+    <ol class="plan">${plan.map((it) => `<li class="${S.plan.ticks[it.id] ? 'done' : ''}" data-id="${it.id}">
+      <button class="tick" aria-label="Mark done">${S.plan.ticks[it.id] ? ICON.check : ''}</button>
+      <span class="lbl">${esc(it.l)}<small>${it.m} min</small></span>
+      <button class="go" data-go="${it.id}">Go</button></li>`).join('')}</ol>
+    <div class="streak"><span><b>${streak()}</b>day streak</span><span><b>${weekMinutes()}</b>min this week</span><span><b>${done}/${LESSONS.length}</b>lessons</span></div>
+  </div></section>
+  <div class="wrap band">
+    <h2>Your path</h2>
+    <p class="sub">Five short units. Each fret is a lesson — about a week per unit if you practise most days.</p>
+    <div class="path">${UNITS.map((u, ui) => `<div class="unit"><h3>Unit ${ui + 1} · ${esc(u)}</h3>
+      ${LESSONS.map((l, i) => l.u !== ui ? '' : `<a class="fret ${S.done[l.id] ? 'done' : ''} ${cur === l ? 'now' : ''}" href="#lesson-${l.id}">
+        <span class="num">${S.done[l.id] ? ICON.check : i + 1}</span><span class="t">${esc(l.t)}<small>${l.min} min${cur === l ? ' · up next' : ''}</small></span></a>`).join('')}
+    </div>`).join('')}</div>
+    <p class="sub" style="margin-top:14px">No sound? Turn off your phone’s <b>silent mode</b> and turn the volume up.</p>
+  </div>`;
+  $$('.plan li').forEach((li) => {
+    const it = plan.find((x) => x.id === li.dataset.id);
+    $('.tick', li).onclick = () => { S.plan.ticks[it.id] = S.plan.ticks[it.id] ? 0 : 1; save(); renderLearn(); };
+    $('.go', li).onclick = () => { planCtx = { id: it.id, secs: 0 }; go(Object.assign({ fromPlan: true }, it.go)); };
+  });
+}
+
+/* ---------- Lesson pages ---------- */
+function renderLesson(id) {
+  const i = LESSONS.findIndex((l) => l.id === id); if (i < 0) return renderLearn();
+  const L = LESSONS[i], next = LESSONS[i + 1];
+  view.innerHTML = `<div class="wrap lesson">
+    <a class="btn ghost back" href="#learn">← Your path</a>
+    <p class="sub" style="margin:8px 0 2px">Unit ${L.u + 1} · ${esc(UNITS[L.u])} · ${L.min} min</p>
+    <h1>${esc(L.t)}</h1>
+    <div class="row" style="margin:10px 0"><button class="btn alt" id="readit">Read it to me</button></div>
+    <div id="art"></div>
+    <ol class="pts">${L.pts.map((p) => `<li>${p}</li>`).join('')}</ol>
+    ${L.go.length ? `<h2>Try it</h2><div class="row">${L.go.map((g, k) => `<button class="btn big" data-k="${k}">${esc(g.l)}</button>`).join('')}</div>` : ''}
+    <div class="row" style="margin:22px 0 8px">
+      <button class="btn ${S.done[L.id] ? 'ok' : 'ghost'} big" id="mark">${S.done[L.id] ? ICON.check + ' Done' : 'Mark as done'}</button>
+      ${next ? `<a class="btn alt big" href="#lesson-${next.id}">Next: ${esc(next.t)} →</a>` : ''}
+    </div></div>`;
+  $('#readit').onclick = (e) => speak(L.t + '. ' + L.pts.map((p) => p.replace(/<[^>]+>/g, '')).join(' '), e.currentTarget);
+  $$('[data-k]').forEach((b) => (b.onclick = () => go(L.go[+b.dataset.k])));
+  $('#mark').onclick = () => { S.done[L.id] = S.done[L.id] ? 0 : dayKey(); if (!S.done[L.id]) delete S.done[L.id]; else if (S.plan.date === dayKey()) S.plan.ticks.lesson = 1; save(); renderLesson(id); if (S.done[L.id]) toast('Lesson done — nice work'); };
+  ART[L.art] && ART[L.art]($('#art'));
+}
+
+/* ---------- lesson pictures ---------- */
+function keyboard(el, lo, hi, opts = {}) {
+  const white = [], black = []; const isB = (m) => [1, 3, 6, 8, 10].includes(((m % 12) + 12) % 12);
+  for (let m = lo; m <= hi; m++) (isB(m) ? black : white).push(m);
+  el.innerHTML = `<div class="keys${white.length > 14 ? ' many' : ''}">${white.map((m) => `<button data-m="${m}" class="${opts.mark && opts.mark(m) ? 'inr' : ''}" aria-label="${DSP.name(m)}">${opts.labels === false ? '' : DSP.name(m).replace(/\d/, (d) => (DSP.pc(m) === 0 ? d : ''))}</button>`).join('')}</div>`;
+  const k = $('.keys', el), W = white.length;
+  black.forEach((m) => {
+    const wi = white.filter((w) => w < m).length;
+    const b = document.createElement('button'); b.className = 'blk'; b.dataset.m = m; b.setAttribute('aria-label', DSP.name(m));
+    b.style.left = `calc(${(wi / W) * 100}% - ${(100 / W) * 0.32}%)`; b.style.width = `${(100 / W) * 0.64}%`;
+    k.appendChild(b);
+  });
+  $$('button', k).forEach((b) => (b.onpointerdown = (e) => { e.preventDefault(); const m = +b.dataset.m; Audio.tone(m, 0.9); b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 300); opts.onKey && opts.onKey(m); }));
+}
+const ART = {
+  wave(el) {
+    const path = (cyc, y) => { let d = ''; for (let x = 0; x <= 300; x += 2) d += (x ? 'L' : 'M') + (x + 60) + ',' + (y + 22 * Math.sin((x / 300) * cyc * 2 * Math.PI)).toFixed(1); return d; };
+    el.innerHTML = `<svg viewBox="0 0 380 150" role="img" aria-label="A slow wave is a low note, a fast wave is a high note">
+      <text x="0" y="45" font-size="15" font-weight="700" fill="currentColor">Low</text><text x="0" y="63" font-size="12" fill="currentColor" opacity=".7">slow</text>
+      <path d="${path(3, 45)}" fill="none" stroke="var(--low)" stroke-width="3.5"/>
+      <text x="0" y="112" font-size="15" font-weight="700" fill="currentColor">High</text><text x="0" y="130" font-size="12" fill="currentColor" opacity=".7">fast</text>
+      <path d="${path(9, 112)}" fill="none" stroke="var(--high)" stroke-width="3.5"/></svg><div id="kb"></div>
+      <p class="sub" style="margin:8px 0 0">12 keys = 12 notes. The 13th key is <b>C again</b>, one octave higher.</p>`;
+    keyboard($('#kb', el), 60, 72);
+  },
+  range(el) {
+    const r = S.range;
+    el.innerHTML = `<div id="kb"></div><p class="sub" style="margin:8px 0 0">${r ? `Your range: <b>${DSP.name(r.lo)} to ${DSP.name(r.hi)}</b> (green keys).` : 'Your range will light up here once you measure it.'}</p>`;
+    keyboard($('#kb', el), 40, 76, { labels: true, mark: (m) => r && m >= r.lo && m <= r.hi });
+  },
+  guitar(el) {
+    const ys = [74, 83, 92, 101, 110, 119], by = 96.5;
+    el.innerHTML = `<svg viewBox="0 0 400 196" role="img" aria-label="Guitar with labelled parts">
+      <defs><linearGradient id="spr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e2b8"/><stop offset="1" stop-color="#d6b273"/></linearGradient></defs>
+      <g fill="url(#spr)" stroke="#8a5a2b" stroke-width="2"><ellipse cx="248" cy="${by}" rx="50" ry="58"/><ellipse cx="330" cy="${by}" rx="64" ry="74"/></g>
+      <ellipse cx="248" cy="${by}" rx="49" ry="57" fill="url(#spr)"/><ellipse cx="330" cy="${by}" rx="63" ry="73" fill="url(#spr)"/>
+      <circle cx="246" cy="${by}" r="21" fill="#2b1a14"/><circle cx="246" cy="${by}" r="25" fill="none" stroke="#8a5a2b" stroke-width="3" stroke-dasharray="3 3"/>
+      <rect x="44" y="70" width="180" height="53" fill="#3a1f17"/>
+      ${[66, 88, 108, 127, 145, 161, 176, 190, 203, 215].map((x) => `<rect x="${x}" y="70" width="2.5" height="53" fill="#cfc8c0"/>`).join('')}
+      <rect x="40" y="70" width="6" height="53" fill="#efe6d8"/>
+      <path d="M4 62h36v69H4z" fill="#4a261c"/>
+      <rect x="338" y="82" width="12" height="29" rx="3" fill="#3a1f17"/>
+      ${ys.map((y, i) => `<g class="str" data-i="${i}" style="cursor:pointer"><rect x="10" y="${y - 4.5}" width="334" height="9" fill="transparent"/><line x1="14" y1="${y}" x2="344" y2="${by + (y - by) * 0.55}" stroke="#ece6de" stroke-width="${2.6 - i * 0.32}"/><circle cx="14" cy="${y}" r="2.6" fill="#cfc8c0"/></g>`).join('')}
+      <g font-size="12.5" fill="currentColor" font-weight="600" text-anchor="middle">
+        <text x="4" y="150" text-anchor="start">Headstock</text><text x="43" y="60">Nut</text><text x="130" y="60">Frets</text><text x="130" y="141">Neck</text>
+        <text x="246" y="187">Sound hole</text><text x="344" y="187">Bridge</text><text x="330" y="16">Body</text></g>
+      <g stroke="currentColor" stroke-width="1.2" opacity=".55"><line x1="246" y1="176" x2="246" y2="${by + 22}"/><line x1="344" y1="176" x2="344" y2="112"/></g>
+    </svg>
+    <div class="strings six" style="margin-top:8px">${[6, 5, 4, 3, 2, 1].map((s, i) => `<button data-s="${i}">${STRING_NAMES[i]}<small>${s}</small></button>`).join('')}</div>`;
+    const play = (i) => Audio.pluck(DSP.OPEN[i], 0, 0.7);
+    $$('.str', el).forEach((g) => (g.onclick = () => play(+g.dataset.i)));
+    $$('[data-s]', el).forEach((b) => (b.onclick = () => play(+b.dataset.s)));
+  },
+  breath(el) {
+    el.innerHTML = `<div class="breath"><div class="ball"></div><div class="say" aria-live="polite">Ready?</div><button class="btn" id="bgo">Start breathing pacer</button><p class="sub" style="margin:0">In for 4 · out on “sss” for 8 · four rounds</p></div>`;
+    let tm = []; const ball = $('.ball', el), say = $('.say', el);
+    $('#bgo', el).onclick = () => {
+      tm.forEach(clearTimeout); tm = [];
+      for (let r = 0; r < 4; r++) {
+        const t0 = r * 12500;
+        tm.push(setTimeout(() => { ball.style.transitionDuration = '4s'; ball.style.transform = 'scale(1)'; say.textContent = 'Breathe in… low'; activity('voice'); }, t0));
+        tm.push(setTimeout(() => { ball.style.transitionDuration = '8s'; ball.style.transform = 'scale(.55)'; say.textContent = 'Out: sssss…'; activity('voice'); }, t0 + 4300));
+      }
+      tm.push(setTimeout(() => (say.textContent = 'Nice. Now a lip trill siren.'), 50000));
+    };
+    onLeave(() => tm.forEach(clearTimeout));
+  },
+  chordbox(el) {
+    el.innerHTML = `<div class="cbox">${chordSVG('Em', { notes: true, big: true })}</div>
+    <p class="sub" style="margin:8px 0 0">Thick string on the <b>left</b>, thin on the <b>right</b>${S.set.left ? ' (flipped for left-handed players)' : ''}. Top bar = the nut.</p>`;
+  },
+  song(el) {
+    el.innerHTML = `<div class="chart">${SONG_CHART.map(([c, w]) => `<div><b>${c}</b><span>${esc(w)}</span></div>`).join('')}</div>
+    <p class="sub" style="margin:8px 0 0">One chord per box. Strum once on each box to start.</p>`;
+  },
+  none() {}
+};
+
+/* ===== Tools: listening helpers, tuner, singing, chords, rhythm, progress ===== */
+let rafId = 0;
+function loop(fn, ms = 45) { cancelAnimationFrame(rafId); let last = 0; const t = (now) => { rafId = requestAnimationFrame(t); if (now - last < ms) return; const dt = last ? (now - last) / 1000 : 0; last = now; fn(dt); }; rafId = requestAnimationFrame(t); }
+function stopLoop() { cancelAnimationFrame(rafId); rafId = 0; }
+function stopAll() { stopLoop(); Audio.micStop(); micChip(); }
+
+/* resolve theme colours for canvas */
+let colCache = null, colT = 0;
+function cols() {
+  if (colCache && performance.now() - colT < 1500) return colCache;
+  const p = $('#probe'), out = {};
+  for (const n of ['ok', 'okbg', 'low', 'high', 'line', 'muted', 'ink', 'wood', 'panel']) { p.style.color = `var(--${n})`; out[n] = getComputedStyle(p).color; }
+  colT = performance.now(); return (colCache = out);
+}
+
+/* pitch reader with adaptive noise gate */
+function PitchReader(opt = {}) {
+  const sm = DSP.makeSmoother(opt.smooth || 5); let floor = 0.01;
+  return {
+    read() {
+      const fr = Audio.micFrame(opt.n || 1536); if (!fr) return null;
+      const r = DSP.rms(fr.x);
+      floor = r < floor ? r : Math.min(0.015, floor * 1.002 + 1e-6);
+      const gate = Math.max(0.0035, floor * 2.6);
+      if (r < gate) { sm.push(0); return { f0: 0, r, gate }; }
+      const y = DSP.yin(fr.x, fr.sr, { fmin: opt.fmin || 70, fmax: opt.fmax || 1100 });
+      const f = y.clarity > 0.72 ? y.f0 : 0;
+      const s = sm.push(f);
+      return { f0: f ? s : 0, r, gate, raw: f };
+    },
+    reset() { sm.reset(); }
+  };
+}
+
+/* listen button + record fallback */
+function listenUI(host, o) {
+  host.innerHTML = `<div class="row"><button class="btn big grow" data-l>${o.label || 'Start listening'}</button>${o.extra || ''}</div>
+  <div class="fallback hidden"><h3>Record and check</h3>
+  <p>Live listening is switched off in this window. Record yourself (camera video or voice memo app), then pick the recording. ${o.fileHint || ''}</p>
+  <label class="btn alt">Choose a recording<input type="file" accept="audio/*,video/*" class="vh"></label>
+  <p class="sub" style="margin:10px 0 0">For live feedback, open the app’s HTML file in Chrome, Edge or Safari.</p></div>`;
+  const b = $('[data-l]', host), fb = $('.fallback', host); let on = false;
+  const setOn = (v) => { on = v; b.textContent = v ? (o.stopLabel || 'Stop listening') : (o.label || 'Start listening'); b.classList.toggle('on', v); };
+  b.onclick = async () => {
+    if (on) { setOn(false); o.onStop && o.onStop(); stopAll(); return; }
+    Audio.ac();
+    const ok = await Audio.micStart(); micChip();
+    if (!ok) { fb.classList.remove('hidden'); b.disabled = true; b.textContent = 'Live mic not available here'; return; }
+    setOn(true); o.onStart();
+  };
+  $('input', fb).onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    toast('Analysing your recording…');
+    try { const a = await Audio.decodeFile(f); o.onFile(a); } catch (err) { toast('Couldn’t read that file. Try a voice memo (.m4a) or a video.'); }
+    e.target.value = '';
+  };
+  if (Audio.mic.blocked) { fb.classList.remove('hidden'); b.disabled = true; b.textContent = 'Live mic not available here'; }
+  return { stop() { if (on) { setOn(false); o.onStop && o.onStop(); } }, isOn: () => on };
+}
+
+/* scrolling pitch line */
+function Trace(canvas) {
+  const P = []; const o = { lo: 48, hi: 62, target: null, tol: 50, follow: false, span: 8, stat: 0 };
+  const ro = new ResizeObserver(() => draw()); ro.observe(canvas.parentElement);
+  function draw() {
+    const W = canvas.clientWidth, H = canvas.clientHeight, dpr = window.devicePixelRatio || 1;
+    if (!W || !H) return;
+    if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) { canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); }
+    const g = canvas.getContext('2d'), C = cols(); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+    const L = 40, y = (m) => H - 16 - ((m - o.lo) / (o.hi - o.lo)) * (H - 32);
+    g.font = '12px Lexend, system-ui, sans-serif'; g.textBaseline = 'middle';
+    for (let m = Math.ceil(o.lo); m <= Math.floor(o.hi); m++) {
+      const nat = ![1, 3, 6, 8, 10].includes(DSP.pc(m)), yy = y(m);
+      g.globalAlpha = nat ? 1 : 0.45; g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(L, yy); g.lineTo(W, yy); g.stroke();
+      if (nat && (o.hi - o.lo < 20 || DSP.pc(m) === 0 || DSP.pc(m) === 7)) { g.fillStyle = C.muted; g.fillText(DSP.name(m), 6, yy); }
+    }
+    g.globalAlpha = 1;
+    if (o.target != null) {
+      const a = y(o.target + o.tol / 100), b = y(o.target - o.tol / 100);
+      g.fillStyle = C.okbg; g.fillRect(L, a, W - L, b - a);
+      g.strokeStyle = C.ok; g.lineWidth = 2; g.beginPath(); g.moveTo(L, y(o.target)); g.lineTo(W, y(o.target)); g.stroke();
+      g.fillStyle = C.ok; g.font = '700 13px Lexend, system-ui, sans-serif'; g.fillText(DSP.name(o.target), 6, y(o.target));
+    }
+    const now = performance.now() / 1000;
+    const x = o.stat ? (t) => L + (W - L - 10) * (t / o.stat) : (t) => L + (W - L - 14) * (1 - (now - t) / o.span);
+    g.lineWidth = 4; g.lineCap = 'round';
+    for (let i = 1; i < P.length; i++) {
+      const a = P[i - 1], b = P[i]; if (!a.m || !b.m || Math.abs(a.m - b.m) > 1.5) continue;
+      let c = C.ink; if (o.target != null) { const d = (b.m - o.target) * 100; c = Math.abs(d) <= o.tol ? C.ok : d < 0 ? C.low : C.high; }
+      g.strokeStyle = c; g.beginPath(); g.moveTo(x(a.t), clamp(y(a.m), 2, H - 2)); g.lineTo(x(b.t), clamp(y(b.m), 2, H - 2)); g.stroke();
+    }
+    const last = P[P.length - 1];
+    if (last && last.m && !o.stat) { g.fillStyle = C.ink; g.beginPath(); g.arc(x(last.t), clamp(y(last.m), 6, H - 6), 6, 0, 7); g.fill(); }
+  }
+  return {
+    push(m) {
+      const t = performance.now() / 1000; P.push({ t, m }); while (P.length && t - P[0].t > o.span + 0.5) P.shift();
+      if (o.follow && m) { const span = o.hi - o.lo; if (m > o.hi - 2) { o.hi = m + 3; o.lo = o.hi - span; } if (m < o.lo + 2) { o.lo = m - 3; o.hi = o.lo + span; } }
+      draw();
+    },
+    set(v) { Object.assign(o, v); draw(); },
+    load(points, dur) { P.length = 0; points.forEach((p) => P.push(p)); o.stat = dur; draw(); },
+    live() { o.stat = 0; P.length = 0; draw(); },
+    draw, o
+  };
+}
+const centsTxt = (c) => (c > 0 ? '+' : c < 0 ? '−' : '') + Math.abs(Math.round(c)) + ' cents';
+
+/* ================= TUNER ================= */
+function renderTune(p) {
+  const ticks = []; for (let c = -50; c <= 50; c += 5) { const a = (c * 1.6 - 90) * Math.PI / 180, r1 = c % 25 === 0 ? 160 : 170; ticks.push(`<line x1="${200 + r1 * Math.cos(a)}" y1="${210 + r1 * Math.sin(a)}" x2="${200 + 182 * Math.cos(a)}" y2="${210 + 182 * Math.sin(a)}" stroke="currentColor" stroke-width="${c % 25 === 0 ? 3 : 1.5}" opacity="${c % 25 === 0 ? .8 : .45}"/>`); }
+  const arc = (c0, c1, r) => { const a0 = (c0 * 1.6 - 90) * Math.PI / 180, a1 = (c1 * 1.6 - 90) * Math.PI / 180; return `M${200 + r * Math.cos(a0)},${210 + r * Math.sin(a0)} A${r},${r} 0 0 1 ${200 + r * Math.cos(a1)},${210 + r * Math.sin(a1)}`; };
+  view.innerHTML = `<div class="wrap band">
+    <h1>Tuner</h1><p class="sub">Pluck <b>one string</b> and let it ring. Tune <b>up</b> to the note.</p>
+    <div class="tuner"><svg viewBox="0 0 400 225" role="img" aria-label="Tuning needle">
+      <path d="${arc(-50, 50, 188)}" fill="none" stroke="var(--panel2)" stroke-width="18" stroke-linecap="round"/>
+      <path d="${arc(-50, -5, 188)}" fill="none" stroke="var(--low)" stroke-width="6" opacity=".55"/>
+      <path d="${arc(5, 50, 188)}" fill="none" stroke="var(--high)" stroke-width="6" opacity=".55"/>
+      <path d="${arc(-5, 5, 188)}" fill="none" stroke="var(--ok)" stroke-width="18"/>
+      ${ticks.join('')}
+      <text x="22" y="222" font-size="14" fill="var(--low)" font-weight="700">too low</text><text x="378" y="222" font-size="14" fill="var(--high)" font-weight="700" text-anchor="end">too high</text>
+      <g class="needle" id="needle"><line x1="200" y1="210" x2="200" y2="40" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/></g>
+      <circle cx="200" cy="210" r="11" fill="var(--wood)"/></svg>
+      <div class="readout"><div class="nn" id="tn">–</div><div class="sub" id="tc">Pick a string, or just play one</div><div class="hint" id="th" aria-live="polite"></div></div></div>
+    <div class="strings" id="strs"><button data-s="-1" aria-pressed="true">Auto<small>any</small></button>${STRING_NAMES.map((n, i) => `<button data-s="${i}">${n}<small>string ${6 - i}</small></button>`).join('')}</div>
+    <div id="lis"></div>
+    <div class="row" style="margin-top:10px"><button class="btn alt" id="ref">Hear the string</button></div>
+    <p class="sub" style="margin-top:14px">Needle jumping around? Hold the phone close to the sound hole and mute the other strings with your hand.</p></div>`;
+  let sel = -1, last = 5, good = new Set(), streakOk = 0;
+  const show = (m, how) => {
+    const tgt = sel >= 0 ? sel : DSP.OPEN.reduce((b, o, i) => (Math.abs(m - o) < Math.abs(m - DSP.OPEN[b]) ? i : b), 0);
+    last = tgt; const c = (m - DSP.OPEN[tgt]) * 100;
+    $('#needle').style.transform = `rotate(${clamp(c, -50, 50) * 1.6}deg)`;
+    $('#tn').textContent = STRING_NAMES[tgt]; $('#tn').className = 'nn ' + (Math.abs(c) <= 5 ? 'c-ok' : c < 0 ? 'c-low' : 'c-high');
+    $('#tc').textContent = `string ${6 - tgt} · you're on ${DSP.name(m)} · ${centsTxt(c)}${how ? ' · ' + how : ''}`;
+    const th = $('#th');
+    if (Math.abs(c) > 350) { th.textContent = 'Far off — is this the right string?'; th.className = 'hint'; }
+    else if (Math.abs(c) <= 5) { th.innerHTML = 'In tune ✓'; th.className = 'hint c-ok'; }
+    else if (c < 0) { th.textContent = 'Too low — tighten slowly ↑'; th.className = 'hint c-low'; }
+    else { th.textContent = 'Too high — loosen, then come back up'; th.className = 'hint c-high'; }
+    return { tgt, c };
+  };
+  $$('#strs button').forEach((b) => (b.onclick = () => { sel = +b.dataset.s; $$('#strs button').forEach((x) => x.setAttribute('aria-pressed', x === b)); if (sel >= 0) Audio.pluck(DSP.OPEN[sel], 0, 0.7); }));
+  $('#ref').onclick = () => Audio.pluck(DSP.OPEN[sel >= 0 ? sel : last], 0, 0.7);
+  const pr = PitchReader({ n: 2048, fmin: 60, fmax: 1000, smooth: 7 });
+  const L = listenUI($('#lis'), {
+    onStart() {
+      loop(() => {
+        const r = pr.read(); if (!r || !r.f0) return;
+        activity('guitar');
+        const { tgt, c } = show(DSP.f2m(r.f0));
+        if (Math.abs(c) <= 5) { if (++streakOk === 14 && !good.has(tgt)) { good.add(tgt); $(`#strs [data-s="${tgt}"]`).classList.add('good'); toast(`String ${6 - tgt} (${STRING_NAMES[tgt]}) is in tune`); } } else streakOk = 0;
+      });
+    },
+    onStop: stopLoop,
+    fileHint: 'Pluck <b>one</b> string and let it ring for 3 seconds.',
+    onFile(a) {
+      const tr = DSP.track(a.x, a.sr, { fmin: 60, fmax: 1000 }).filter((f) => f.f0).map((f) => DSP.f2m(f.f0)).sort((x, y) => x - y);
+      if (tr.length < 5) return toast('I couldn’t hear a clear note. Try again closer to the guitar.');
+      const mid = tr.slice(Math.floor(tr.length * 0.2), Math.ceil(tr.length * 0.8)); show(mid[mid.length >> 1], 'from your recording');
+    }
+  });
+  onLeave(() => { L.stop(); stopAll(); });
+}
+
+/* ================= SING ================= */
+function singRange() { if (S.range) return S.range; return S.set.voice === 'high' ? { lo: 57, hi: 72, guess: 1 } : { lo: 45, hi: 60, guess: 1 }; }
+function keyFor(notes) { // centre the tune in your range, preferring easy keys (C D E F G A)
+  const r = singRange(), lo = Math.min(...notes), hi = Math.max(...notes), ideal = (r.lo + r.hi) / 2 - (lo + hi) / 2;
+  let best = Math.round(clamp(ideal, r.lo - lo, r.hi - hi)), bd = 99;
+  for (let t = Math.floor(ideal) - 3; t <= Math.ceil(ideal) + 3; t++) if ([0, 2, 4, 5, 7, 9].includes(DSP.pc(t)) && t + lo >= r.lo - 1 && t + hi <= r.hi + 1 && Math.abs(t - ideal) < bd) { bd = Math.abs(t - ideal); best = t; }
+  return best;
+}
+function chime() { Audio.tone(84, 0.12, 0, 0.18); Audio.tone(88, 0.18, 0.11, 0.18); }
+function renderSing(p) {
+  const mode = p.mode || renderSing.mode || 'match'; renderSing.mode = mode;
+  const modes = [['match', 'Match a note'], ['song', 'Steps & songs'], ['free', 'Free / siren'], ['range', 'My range'], ['ear', 'Ear game']];
+  view.innerHTML = `<div class="wrap band"><h1>Sing</h1>
+    <div class="chips" role="group" aria-label="Singing modes">${modes.map(([k, l]) => `<button data-m="${k}" aria-pressed="${k === mode}">${l}</button>`).join('')}</div>
+    ${!S.range && !S.set.voice && mode !== 'range' && mode !== 'ear' ? `<div class="card" id="vq"><h3>Which is closer to your voice?</h3><p class="sub">So I pick notes you can reach. You can measure it exactly later.</p>
+      <div class="row"><button class="btn alt" data-voice="low">Lower voice</button><button class="btn alt" data-voice="high">Higher voice</button><button class="btn ghost" data-voice="measure">Measure it</button></div></div>` : ''}
+    <div id="mode"></div></div>`;
+  $$('.chips [data-m]').forEach((b) => (b.onclick = () => go({ v: 'sing', mode: b.dataset.m })));
+  $$('[data-voice]').forEach((b) => (b.onclick = () => { if (b.dataset.voice === 'measure') return go({ v: 'sing', mode: 'range' }); S.set.voice = b.dataset.voice; save(); go({ v: 'sing', mode }); }));
+  ({ match: singMatch, song: singSong, free: singFree, range: singRangeMode, ear: earGame })[mode]($('#mode'), p);
+}
+function traceBlock() { return `<div class="fig"><canvas aria-label="Your pitch over time"></canvas><div class="over"><div class="nn" id="nn">–</div><div class="cc" id="cc"></div></div><div class="msg" id="msg"></div></div>`; }
+function noteOverlay(m, target, tol) {
+  const nn = $('#nn'), cc = $('#cc'); if (!nn) return;
+  if (!m) { nn.textContent = '–'; cc.textContent = ''; nn.className = 'nn'; return; }
+  nn.textContent = DSP.name(m);
+  if (target == null) { cc.textContent = centsTxt((m - Math.round(m)) * 100); nn.className = 'nn'; return; }
+  const d = (m - target) * 100; nn.className = 'nn ' + (Math.abs(d) <= tol ? 'c-ok' : d < 0 ? 'c-low' : 'c-high');
+  cc.textContent = Math.abs(d) <= tol ? 'On it' : d < 0 ? `Too low ↑ ${Math.round(-d)}c` : `Too high ↓ ${Math.round(d)}c`;
+}
+const octaveFold = (d) => ((((d + 600) % 1200) + 1200) % 1200) - 600;
+
+function singMatch(el, p) {
+  const tol = S.set.tol, drone = !!p.drone;
+  el.innerHTML = `<div class="card"><div class="row" style="justify-content:space-between"><div><span class="sub">${drone ? 'Hum the home note of' : 'Sing this note'}</span><div style="font-size:34px;font-weight:700;line-height:1.1" id="tgt">–</div></div>
+    <div class="row"><button class="btn alt" id="again">Hear it again</button><button class="btn ghost" id="next">New note</button></div></div>
+    <div class="hold" aria-hidden="true"><i id="hold"></i></div><p class="sub" style="margin:0" id="say">Press start, listen, then sing “oo”.</p></div>
+    ${traceBlock()}<div style="margin-top:12px" id="lis"></div>
+    <div class="stats"><div><b id="sN">0</b>notes</div><div><b id="sOk">0</b>matched</div><div><b id="sE">–</b>avg off</div></div>`;
+  const tr = Trace($('canvas', el)), pr = PitchReader();
+  const M = { t: null, chord: null, phase: 'idle', hold: 0, n: 0, ok: 0, errs: [], all: [] };
+  const r = singRange();
+  const pick = () => {
+    if (drone) {
+      const pool = learnedChords().filter((c) => !c.includes('7')); const list = pool.length ? pool : ['G', 'C', 'D', 'Em', 'A'];
+      M.chord = list[Math.floor(Math.random() * list.length)]; const root = DSP.NAMES.findIndex((n) => n === M.chord.replace('m', '').replace('maj7', ''));
+      let m = r.lo + 2 + ((root - (r.lo + 2)) % 12 + 12) % 12; M.t = m;
+    } else {
+      const lo = r.lo + 2, hi = r.hi - 3; let m = M.t == null ? Math.round((lo + hi) / 2) : M.t + [-4, -3, -2, 2, 3, 4, 5][Math.floor(Math.random() * 7)];
+      M.t = clamp(m, lo, hi);
+    }
+    $('#tgt').textContent = drone ? `${M.chord} → ${DSP.name(M.t)}` : DSP.name(M.t);
+    tr.set({ target: M.t, lo: M.t - 6, hi: M.t + 6, tol });
+  };
+  const play = () => {
+    M.phase = 'play'; $('#say').textContent = 'Listen…'; M.hold = 0; M.errs = []; $('#hold').style.width = '0%'; $('#msg').textContent = ''; noteOverlay(0);
+    let end = 0; if (drone) { Audio.strum(CHORDS[M.chord].shape); end = Audio.tone(M.t, 1.2, 1.0); } else end = Audio.tone(M.t, 1.3);
+    setTimeout(() => { if (M.phase === 'play') { M.phase = 'listen'; pr.reset(); $('#say').textContent = 'Your turn — sing and hold it in the band.'; } }, (end - Audio.now()) * 1000 + 180);
+  };
+  const won = () => {
+    M.phase = 'won'; M.n++; M.ok++; const e = M.errs.reduce((a, b) => a + b, 0) / M.errs.length; M.all.push(e);
+    $('#sN').textContent = M.n; $('#sOk').textContent = M.ok; $('#sE').textContent = Math.round(M.all.reduce((a, b) => a + b, 0) / M.all.length) + 'c';
+    $('#say').innerHTML = `<b class="c-ok">Matched!</b> On average ${Math.round(e)} cents away.`; chime();
+    setTimeout(() => { if (M.phase === 'won') { pick(); play(); } }, 1500);
+  };
+  $('#again').onclick = () => { if (M.t == null) pick(); play(); };
+  $('#next').onclick = () => { if (M.phase === 'listen' && M.t != null) { M.n++; $('#sN').textContent = M.n; } pick(); play(); };
+  pick();
+  const L = listenUI($('#lis', el), {
+    onStart() {
+      play();
+      loop((dt) => {
+        const rd = pr.read(); if (!rd) return;
+        const m = rd.f0 ? DSP.f2m(rd.f0) : 0;
+        if (M.phase !== 'listen') { tr.push(0); return; }
+        tr.push(m); noteOverlay(m, M.t, tol);
+        if (!m) { M.hold = Math.max(0, M.hold - dt * 0.5); }
+        else {
+          activity('voice');
+          const d = (m - M.t) * 100, f = octaveFold(d), inB = Math.abs(d) <= tol || (Math.abs(f) <= tol && Math.abs(d) >= 900);
+          if (inB) { M.hold += dt; M.errs.push(Math.abs(f)); if (Math.abs(d) >= 900) $('#msg').textContent = `Same note, one octave ${d < 0 ? 'lower' : 'higher'} — that counts.`; else $('#msg').textContent = ''; }
+          else M.hold = Math.max(0, M.hold - dt * 0.5);
+          if (M.hold >= 2) won();
+        }
+        $('#hold').style.width = Math.min(100, (M.hold / 2) * 100) + '%';
+      });
+    },
+    onStop() { stopLoop(); M.phase = 'idle'; },
+    fileHint: 'Press <b>Hear it again</b>, then record yourself singing that note for 3 seconds.',
+    onFile(a) {
+      const t = DSP.track(a.x, a.sr); const pts = t.map((f) => ({ t: f.t, m: f.f0 ? DSP.f2m(f.f0) : 0 }));
+      tr.load(pts, a.dur); const v = pts.filter((x) => x.m);
+      if (v.length < 5) return toast('No clear singing found in that recording.');
+      const ds = v.map((x) => octaveFold((x.m - M.t) * 100)); const inb = ds.filter((d) => Math.abs(d) <= tol).length / ds.length;
+      const med = ds.slice().sort((x, y) => x - y)[ds.length >> 1];
+      M.n++; if (inb > 0.5) M.ok++; M.all.push(Math.abs(med)); $('#sN').textContent = M.n; $('#sOk').textContent = M.ok; $('#sE').textContent = Math.round(Math.abs(med)) + 'c';
+      $('#say').innerHTML = inb > 0.5 ? `<b class="c-ok">Matched</b> for ${Math.round(inb * 100)}% of the time.` : `Mostly <b class="${med < 0 ? 'c-low' : 'c-high'}">${med < 0 ? 'too low' : 'too high'}</b> (about ${Math.round(Math.abs(med))} cents). ${med < 0 ? 'Aim a little higher.' : 'Aim a little lower.'}`;
+      activity('voice');
+    }
+  });
+  onLeave(() => { L.stop(); stopAll(); if (M.n) { S.sing.push({ d: dayKey(), mode: drone ? 'home note' : 'match', n: M.n, ok: M.ok, e: M.all.length ? Math.round(M.all.reduce((a, b) => a + b, 0) / M.all.length) : null }); S.sing = S.sing.slice(-120); save(); } });
+}
+
+function singSong(el, p) {
+  const key = p.mel || singSong.key || 'five'; singSong.key = key;
+  const mel = MELODIES[key], base = keyFor(mel.notes), seq = mel.notes.map((n) => base + n), tol = S.set.tol;
+  el.innerHTML = `<div class="chips">${Object.entries(MELODIES).map(([k, m]) => `<button data-mel="${k}" aria-pressed="${k === key}">${esc(m.name)}</button>`).join('')}</div>
+    <div class="card"><div class="row" style="justify-content:space-between"><span class="sub">Key note: <b>${DSP.name(base)}</b> · tap a bubble to hear it</span>
+    <label class="row" style="gap:6px;font-size:15px"><input type="checkbox" id="auto" checked style="width:22px;height:22px"> Play each note first</label></div>
+    <div class="bubbles" id="bub">${seq.map((m, i) => `<button data-i="${i}">${esc(mel.syl[i])}<small>${DSP.name(m).replace(/\d/, '')}</small></button>`).join('')}</div>
+    <div class="row"><button class="btn alt" id="whole">Hear the whole tune</button><button class="btn ghost" id="restart">Start over</button></div>
+    <div class="hold"><i id="hold"></i></div><p class="sub" style="margin:0" id="say">The app waits for you on every note. Go slowly.</p></div>
+    ${traceBlock()}<div style="margin-top:12px" id="lis"></div>`;
+  $$('[data-mel]', el).forEach((b) => (b.onclick = () => go({ v: 'sing', mode: 'song', mel: b.dataset.mel })));
+  const tr = Trace($('canvas', el)), pr = PitchReader();
+  tr.set({ lo: Math.min(...seq) - 3, hi: Math.max(...seq) + 3, tol });
+  const G = { i: 0, hold: 0, errs: [], res: [], phase: 'idle' };
+  const mark = () => $$('#bub button').forEach((b, i) => { b.className = (i === G.i && G.phase !== 'done' ? 'cur ' : '') + (G.res[i] == null ? '' : Math.abs(G.res[i]) <= tol * 0.6 ? 'ok' : G.res[i] < 0 ? 'lo' : 'hi'); });
+  const target = () => { tr.set({ target: seq[G.i] }); mark(); };
+  const playCur = () => { G.phase = 'play'; noteOverlay(0); $('#hold').style.width = '0%'; const end = Audio.tone(seq[G.i], 0.9); setTimeout(() => { if (G.phase === 'play') { G.phase = 'listen'; pr.reset(); } }, (end - Audio.now()) * 1000 + 150); };
+  const advance = () => {
+    G.res[G.i] = G.errs.reduce((a, b) => a + b, 0) / G.errs.length; G.i++; G.hold = 0; G.errs = [];
+    if (G.i >= seq.length) {
+      G.phase = 'done'; mark(); chime(); const ok = G.res.filter((e) => Math.abs(e) <= tol * 0.6).length;
+      $('#say').innerHTML = `<b class="c-ok">Finished!</b> ${ok} of ${seq.length} notes right in the middle. Blue = a bit low, orange = a bit high.`;
+      S.sing.push({ d: dayKey(), mode: mel.name, n: seq.length, ok, e: Math.round(G.res.reduce((a, b) => a + Math.abs(b), 0) / seq.length) }); S.sing = S.sing.slice(-120); save(); return;
+    }
+    target(); if ($('#auto').checked) playCur(); else { G.phase = 'listen'; pr.reset(); }
+  };
+  $$('#bub button').forEach((b) => (b.onclick = () => Audio.tone(seq[+b.dataset.i], 0.8)));
+  $('#whole').onclick = () => seq.forEach((m, i) => Audio.tone(m, 0.5, i * 0.55));
+  $('#restart').onclick = () => { G.i = 0; G.res = []; G.hold = 0; G.errs = []; G.phase = L.isOn() ? 'play' : 'idle'; target(); if (L.isOn()) playCur(); $('#say').textContent = 'From the top.'; };
+  target();
+  const L = listenUI($('#lis', el), {
+    onStart() {
+      if (G.phase === 'done') { G.i = 0; G.res = []; } target(); playCur();
+      loop((dt) => {
+        const rd = pr.read(); if (!rd) return; const m = rd.f0 ? DSP.f2m(rd.f0) : 0;
+        if (G.phase !== 'listen') { tr.push(0); return; }
+        tr.push(m); noteOverlay(m, seq[G.i], tol);
+        if (m) {
+          activity('voice'); const d = (m - seq[G.i]) * 100;
+          if (Math.abs(d) <= tol) { G.hold += dt; G.errs.push(d); } else G.hold = Math.max(0, G.hold - dt);
+          if (G.hold >= 0.6) advance();
+        }
+        $('#hold').style.width = Math.min(100, (G.hold / 0.6) * 100) + '%';
+      });
+    },
+    onStop() { stopLoop(); if (G.phase !== 'done') G.phase = 'idle'; },
+    fileHint: 'Sing the tune slowly, with a short gap between notes.',
+    onFile(a) {
+      const t = DSP.track(a.x, a.sr); tr.set({ target: null }); tr.load(t.map((f) => ({ t: f.t, m: f.f0 ? DSP.f2m(f.f0) : 0 })), a.dur);
+      const segs = segments(t); if (segs.length < 2) return toast('I couldn’t find separate notes. Leave short gaps between notes.');
+      G.res = []; let j = 0;
+      seq.forEach((m, i) => { // match each target to the next sung note near it
+        while (j < segs.length && Math.abs(octaveFold((segs[j].m - m) * 100)) > 250 && j < segs.length - (seq.length - i)) j++;
+        if (j < segs.length) { G.res[i] = octaveFold((segs[j].m - m) * 100); j++; }
+      });
+      G.phase = 'done'; G.i = seq.length; mark();
+      const ok = G.res.filter((e) => e != null && Math.abs(e) <= tol * 0.6).length;
+      $('#say').innerHTML = `From your recording: <b>${ok} of ${seq.length}</b> notes right in the middle.`; activity('voice');
+    }
+  });
+  onLeave(() => { L.stop(); stopAll(); });
+}
+/* split a pitch track into held notes */
+function segments(t) {
+  const out = []; let cur = null;
+  t.forEach((o) => {
+    if (!o.f0) { if (cur && cur.ms.length >= 5) out.push(cur); cur = null; return; }
+    const m = DSP.f2m(o.f0);
+    if (cur && Math.abs(m - cur.m) < 0.6) { cur.ms.push(m); const s = cur.ms.slice().sort((a, b) => a - b); cur.m = s[s.length >> 1]; cur.t1 = o.t; }
+    else { if (cur && cur.ms.length >= 5) out.push(cur); cur = { m, ms: [m], t0: o.t, t1: o.t }; }
+  });
+  if (cur && cur.ms.length >= 5) out.push(cur);
+  return out;
+}
+
+function singFree(el) {
+  el.innerHTML = `<p class="sub">Do a slow <b>siren</b> on a lip trill or “ng”: low → high → low. The line shows your voice.</p>${traceBlock()}<div style="margin-top:12px" id="lis"></div>`;
+  const r = singRange(), tr = Trace($('canvas', el)), pr = PitchReader();
+  tr.set({ lo: r.lo - 2, hi: r.hi + 2, follow: true, target: null });
+  const L = listenUI($('#lis', el), {
+    onStart() { loop(() => { const rd = pr.read(); if (!rd) return; const m = rd.f0 ? DSP.f2m(rd.f0) : 0; tr.push(m); noteOverlay(m, null); if (m) activity('voice'); }); },
+    onStop: stopLoop,
+    onFile(a) { const t = DSP.track(a.x, a.sr); const pts = t.map((f) => ({ t: f.t, m: f.f0 ? DSP.f2m(f.f0) : 0 })); const v = pts.filter((x) => x.m).map((x) => x.m); if (v.length) tr.set({ lo: Math.min(...v) - 2, hi: Math.max(...v) + 2, follow: false }); tr.load(pts, a.dur); activity('voice'); }
+  });
+  onLeave(() => { L.stop(); stopAll(); });
+}
+
+function singRangeMode(el) {
+  const R = { step: 'low', vals: [], lo: S.range ? S.range.lo : null, hi: S.range ? S.range.hi : null, t: 0 };
+  el.innerHTML = `<div class="card"><h3 id="rh">Step 1: your lowest easy note</h3>
+    <p id="rp">Sing “ah” and slide <b>down slowly</b>. Stop where it starts to feel croaky. Don’t push.</p>
+    <div class="row" style="align-items:baseline;gap:16px"><span style="font-size:40px;font-weight:700" id="rn">–</span><span class="sub" id="rs"></span></div>
+    <div class="row" style="margin-top:8px"><button class="btn alt" id="rdone">That’s my edge</button><button class="btn ghost" id="rskip">Switch step</button></div></div>
+    <div id="lis"></div><div class="art" id="rk" style="margin-top:12px"></div><div id="rres"></div>`;
+  const pr = PitchReader({ smooth: 7 });
+  const kb = () => keyboard($('#rk'), 40, 79, { labels: true, mark: (m) => R.lo != null && R.hi != null && m >= R.lo && m <= R.hi });
+  const res = () => {
+    $('#rs').textContent = `lowest ${R.lo != null ? DSP.name(R.lo) : '–'} · highest ${R.hi != null ? DSP.name(R.hi) : '–'}`; kb();
+    if (R.lo != null && R.hi != null) {
+      $('#rres').innerHTML = `<div class="result good"><b>Your easy range: ${DSP.name(R.lo)} to ${DSP.name(R.hi)}</b> (${R.hi - R.lo} steps). Songs will be set to fit inside it.<div class="row" style="margin-top:8px"><button class="btn ok" id="rsave">Save my range</button></div></div>`;
+      $('#rsave').onclick = () => { S.range = { lo: R.lo, hi: R.hi }; save(); toast('Range saved'); go({ v: 'sing', mode: 'match' }); };
+    }
+  };
+  const fin = () => {
+    if (R.vals.length > 6) { const s = R.vals.slice().sort((a, b) => a - b); if (R.step === 'low') R.lo = Math.round(s[Math.floor(s.length * 0.08)]); else R.hi = Math.round(s[Math.floor(s.length * 0.92)]); }
+    R.vals = []; R.step = R.step === 'low' ? 'high' : 'low';
+    $('#rh').textContent = R.step === 'low' ? 'Step 1: your lowest easy note' : 'Step 2: your highest easy note';
+    $('#rp').innerHTML = R.step === 'low' ? 'Sing “ah” and slide <b>down slowly</b>. Stop where it starts to feel croaky.' : 'Now slide <b>up slowly</b> on “ah” or “oo”. Stop before it strains or squeaks.';
+    res();
+  };
+  $('#rdone').onclick = fin; $('#rskip').onclick = () => { R.vals = []; fin(); };
+  res();
+  const L = listenUI($('#lis', el), {
+    onStart() { loop(() => { const rd = pr.read(); if (!rd || !rd.f0) return; const m = DSP.f2m(rd.f0); if (m < 36 || m > 84) return; activity('voice'); R.vals.push(m); $('#rn').textContent = DSP.name(m); }); },
+    onStop: stopLoop,
+    fileHint: 'Slide from your lowest to your highest easy note on “ah”.',
+    onFile(a) { const v = DSP.track(a.x, a.sr).filter((f) => f.f0).map((f) => DSP.f2m(f.f0)).sort((x, y) => x - y); if (v.length < 10) return toast('Not enough singing found.'); R.lo = Math.round(v[Math.floor(v.length * 0.05)]); R.hi = Math.round(v[Math.floor(v.length * 0.95)]); res(); }
+  });
+  onLeave(() => { L.stop(); stopAll(); });
+}
+
+function earGame(el, p) {
+  const mode = p.ear || earGame.mode || 'hl'; earGame.mode = mode;
+  const ORDER = [5, 4, 2, 0, 3, 1];
+  el.innerHTML = `<div class="chips">${[['hl', 'Higher or lower?'], ['sd', 'Same or different?'], ['iv', 'Name the jump']].map(([k, l]) => `<button data-e="${k}" aria-pressed="${k === mode}">${l}</button>`).join('')}</div>
+    <div class="card" style="text-align:center"><p class="sub" id="eq">Listen to two notes.</p>
+    <button class="btn big" id="eplay" style="min-width:200px">Play</button>
+    <div class="row" id="eans" style="justify-content:center;margin-top:16px"></div>
+    <div class="result info hidden" id="efb" aria-live="polite"></div></div>
+    <div class="stats"><div><b id="es">0</b>in a row</div><div><b id="er">0/0</b>right</div><div><b id="el">–</b>level</div></div>
+    <p class="sub">No mic needed. Use headphones if you can.</p>`;
+  $$('[data-e]', el).forEach((b) => (b.onclick = () => go({ v: 'sing', mode: 'ear', ear: b.dataset.e })));
+  const r = singRange(); let Q = null, st = 0, right = 0, tot = 0, recent = [];
+  const lvl = () => { $('#el').textContent = mode === 'hl' ? S.ear.hl + ' st' : mode === 'sd' ? Math.round(S.ear.sd) + 'c' : S.ear.iv + '/6'; };
+  const pool = () => ORDER.slice(0, clamp(S.ear.iv, 2, 6)).map((i) => INTERVALS[i]);
+  const make = () => {
+    const a = Math.round(r.lo + 3 + Math.random() * Math.max(1, r.hi - r.lo - 9));
+    if (mode === 'hl') { const up = Math.random() < 0.5; Q = { a, b: a + (up ? 1 : -1) * S.ear.hl, ans: up ? 'Higher' : 'Lower', opts: ['Lower', 'Higher'] }; }
+    else if (mode === 'sd') { const same = Math.random() < 0.4; Q = { a, b: same ? a : a + (Math.random() < 0.5 ? 1 : -1) * S.ear.sd / 100, ans: same ? 'Same' : 'Different', opts: ['Same', 'Different'] }; }
+    else { const P = pool(), iv = P[Math.floor(Math.random() * P.length)]; Q = { a, b: a + iv.st, ans: iv.name, cue: iv.cue, opts: P.map((x) => x.name) }; }
+    $('#eans').innerHTML = Q.opts.map((o) => `<button class="btn alt big" data-a="${esc(o)}">${esc(o)}</button>`).join('');
+    $$('#eans [data-a]').forEach((b) => (b.onclick = () => answer(b.dataset.a)));
+    $('#efb').classList.add('hidden'); Q.done = false;
+  };
+  const play = () => { if (!Q) make(); Audio.tone(Q.a, 0.7, 0, 0.3); Audio.tone(Q.b, 0.7, 0.85, 0.3); $('#eq').textContent = mode === 'iv' ? 'Which jump was that?' : mode === 'hl' ? 'Was the second note higher or lower?' : 'Were they the same note?'; };
+  const answer = (a) => {
+    if (!Q || Q.done) return; Q.done = true; tot++; activity('ear');
+    const ok = a === Q.ans; recent.push(ok); recent = recent.slice(-10);
+    if (ok) { st++; right++; } else st = 0;
+    if (mode === 'hl') { if (ok && st % 3 === 0) S.ear.hl = Math.max(1, S.ear.hl - 1); if (!ok) S.ear.hl = Math.min(12, S.ear.hl + 1); }
+    if (mode === 'sd') { if (ok && st % 3 === 0) S.ear.sd = Math.max(10, S.ear.sd * 0.75); if (!ok) S.ear.sd = Math.min(200, S.ear.sd * 1.3); }
+    if (mode === 'iv' && recent.length === 10 && recent.filter(Boolean).length >= 8 && S.ear.iv < 6) { S.ear.iv++; recent = []; toast('New jump unlocked: ' + INTERVALS[ORDER[S.ear.iv - 1]].name); }
+    S.ear.best = Math.max(S.ear.best || 0, st); save();
+    const fb = $('#efb'); fb.classList.remove('hidden'); fb.className = 'result ' + (ok ? 'good' : 'close');
+    fb.innerHTML = (ok ? '<b>Yes!</b> ' : `<b>Not quite</b> — it was <b>${esc(Q.ans)}</b>. `) + (Q.cue ? esc(Q.cue) + '. ' : '') + '<button class="btn alt" id="enext" style="margin-left:8px">Next</button>';
+    $('#enext').onclick = () => { make(); play(); };
+    if (!ok) setTimeout(() => { Audio.tone(Q.a, 0.6, 0, 0.3); Audio.tone(Q.b, 0.6, 0.7, 0.3); }, 250);
+    $('#es').textContent = st; $('#er').textContent = right + '/' + tot; lvl();
+  };
+  $('#eplay').onclick = () => { if (!Q || Q.done) make(); play(); };
+  lvl();
+}
+
+/* ================= CHORDS ================= */
+function chordSVG(label, o = {}) {
+  const ch = CHORDS[label], left = S.set.left, X = (i) => 30 + (left ? 5 - i : i) * 28, top = 46, fh = 38, frets = 5;
+  const st = o.status || [], hl = o.hl;
+  let s = `<svg viewBox="0 0 200 ${o.notes ? 290 : 274}" role="img" aria-label="${label} chord diagram">`;
+  for (let f = 0; f <= frets; f++) s += `<line x1="30" x2="170" y1="${top + f * fh}" y2="${top + f * fh}" stroke="currentColor" stroke-width="${f ? 2 : 7}" opacity="${f ? .45 : 1}"/>`;
+  for (let i = 0; i < 6; i++) s += `<line x1="${X(i)}" x2="${X(i)}" y1="${top}" y2="${top + frets * fh}" stroke="${hl === i ? 'var(--wood)' : 'currentColor'}" stroke-width="${hl === i ? 5 : 3.2 - i * 0.35}" opacity="${hl === i ? 1 : .8}"/>`;
+  ch.shape.forEach((f, i) => {
+    if (f < 0) s += `<text x="${X(i)}" y="${top - 14}" text-anchor="middle" font-size="18" font-weight="700" fill="currentColor" opacity=".7">×</text>`;
+    else if (f === 0) s += `<circle cx="${X(i)}" cy="${top - 19}" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/>`;
+    else s += `<circle cx="${X(i)}" cy="${top + (f - 0.5) * fh}" r="12.5" fill="var(--wood)"/><text x="${X(i)}" y="${top + (f - 0.5) * fh + 5.5}" text-anchor="middle" font-size="15" font-weight="700" fill="#fff7f0">${ch.fingers[i] || ''}</text>`;
+    const stt = st[i];
+    if (stt) { const c = stt === 'ok' ? 'var(--ok)' : stt === 'wait' ? 'var(--muted)' : stt === 'shared' ? 'var(--muted)' : 'var(--high)'; const g = stt === 'ok' ? '✓' : stt === 'wait' ? '·' : stt === 'shared' ? '?' : '!'; s += `<circle cx="${X(i)}" cy="${top + frets * fh + 20}" r="11" fill="${c}"/><text x="${X(i)}" y="${top + frets * fh + 25}" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">${g}</text>`; }
+    if (o.notes && f >= 0) s += `<text x="${X(i)}" y="${top + frets * fh + 44}" text-anchor="middle" font-size="12" fill="currentColor" opacity=".75">${DSP.pcName(DSP.OPEN[i] + f)}</text>`;
+  });
+  if (o.notes) s += `<text x="${X(0)}" y="${top + frets * fh + 24}" text-anchor="middle" font-size="11" fill="currentColor">6</text><text x="${X(5)}" y="${top + frets * fh + 24}" text-anchor="middle" font-size="11" fill="currentColor">1</text>`;
+  return s + '</svg>';
+}
+const SHAPES = Object.fromEntries(Object.entries(CHORDS).map(([k, v]) => [k, v.shape]));
+const pairKey = (a, b) => [a, b].sort((x, y) => CHORD_ORDER.indexOf(x) - CHORD_ORDER.indexOf(y)).join('-');
+function spark(vals) { if (vals.length < 2) return ''; const mx = Math.max(...vals), mn = Math.min(...vals, 0), W = 300, H = 44; const pts = vals.map((v, i) => `${(i / (vals.length - 1)) * (W - 8) + 4},${H - 4 - ((v - mn) / Math.max(1, mx - mn)) * (H - 8)}`).join(' '); return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--wood)" stroke-width="3" vector-effect="non-scaling-stroke"/></svg>`; }
+
+function renderChords(p) {
+  const learned = learnedChords();
+  let cur = p.chord || renderChords.cur || learned[0] || 'Em'; renderChords.cur = cur;
+  view.innerHTML = `<div class="wrap band"><h1>Chords</h1>
+    <div class="chips">${CHORD_ORDER.map((c) => `<button data-c="${c}" aria-pressed="${c === cur}">${c}${learned.includes(c) ? '<span class="dot" aria-label="learned"></span>' : ''}</button>`).join('')}</div>
+    <div class="chordwrap"><div class="cbox" id="cbox">${chordSVG(cur)}</div>
+    <div><div class="cname">${cur}</div><p style="margin-top:8px">${CHORDS[cur].tip}</p>
+      <div class="row"><button class="btn alt" id="hear">Hear it</button></div>
+      <div class="row" style="margin-top:10px"><button class="btn" id="cstrum">Check my strum</button><button class="btn" id="cperf">String by string</button></div></div></div>
+    <div id="cres" aria-live="polite"></div><div id="lis"></div>
+    <div class="card" style="margin-top:18px" id="omc"></div></div>`;
+  $$('[data-c]').forEach((b) => (b.onclick = () => go({ v: 'chords', chord: b.dataset.c })));
+  $('#hear').onclick = () => Audio.strum(CHORDS[cur].shape);
+  const shape = CHORDS[cur].shape, res = $('#cres');
+  let mode = null; const pr = PitchReader({ n: 2048, fmin: 70, fmax: 1000, smooth: 3 });
+  const box = (status, hl) => ($('#cbox').innerHTML = chordSVG(cur, { status, hl }));
+  const showStrum = (r) => {
+    const status = r.strings.map((x) => (x.state === 'skip' ? null : x.state === 'quiet' ? 'bad' : x.state));
+    if (r.fix) { const i = 6 - r.fix.s; status[i] = 'bad'; }
+    box(status);
+    const quiet = r.quiet.map((s) => `String ${s} (${STRING_NAMES[6 - s]}) sounds <b>muted</b> — arch that finger, or press closer to the fret.`);
+    if (r.verdict === 'silent') res.innerHTML = `<div class="result info">I didn’t hear a strum. Get a bit closer and strum once, firmly.</div>`;
+    else if (r.verdict === 'good') res.innerHTML = `<div class="result good"><b>Clean ${cur}!</b> Every note I can check rings. Grey “?” strings share a note with another string, so I can’t check them on their own — use <b>String by string</b> for those.</div>`;
+    else if (r.verdict === 'other') res.innerHTML = `<div class="result other"><b>That sounded more like ${r.other}.</b> Compare your fingers with the box above.</div>`;
+    else res.innerHTML = `<div class="result close"><b>Nearly there.</b> Most likely:<ul>${r.fix ? `<li>${esc(r.fix.why.replace(/^./, (c) => c.toUpperCase()))}.</li>` : ''}${quiet.map((q) => `<li>${q}</li>`).join('')}${!r.fix && !quiet.length ? '<li>Something extra is ringing. Try <b>String by string</b> to find it.</li>' : ''}</ul></div>`;
+    activity('guitar');
+  };
+  /* string-by-string ("chord perfect") */
+  const order = shape.map((f, i) => i).filter((i) => shape[i] >= 0);
+  let K = { k: 0, status: [], phase: 'wait', stable: [], t0: 0, rms: [], since: 0 };
+  const perfPrompt = () => {
+    const i = order[K.k];
+    if (i == null) {
+      const bad = order.filter((j) => K.status[j] !== 'ok');
+      res.innerHTML = bad.length ? `<div class="result close"><b>${order.length - bad.length} of ${order.length} strings ring.</b><ul>${bad.map((j) => `<li>String ${6 - j}: ${K.msg[j]}</li>`).join('')}</ul></div>` : `<div class="result good"><b>All ${order.length} strings ring clearly.</b> That’s a perfect ${cur}.</div>`;
+      box(K.status); mode = null; activity('guitar'); return;
+    }
+    box(K.status, i);
+    res.innerHTML = `<div class="result info">Pluck <b>string ${6 - i} (${STRING_NAMES[i]})</b> on its own. <button class="btn ghost" id="pskip" style="margin-left:6px">It made no sound</button></div>`;
+    $('#pskip').onclick = () => decide(null);
+  };
+  const decide = (m) => {
+    const i = order[K.k], want = DSP.OPEN[i] + shape[i]; K.msg = K.msg || {};
+    if (m == null) { K.status[i] = 'bad'; K.msg[i] = 'no clear note — a finger may be touching it, or press harder right behind the fret.'; }
+    else {
+      const d = (m - want) * 100, f = octaveFold(d);
+      if (Math.abs(d) <= 60 || (Math.abs(f) <= 50 && Math.abs(d) < 1300)) { K.status[i] = 'ok'; }
+      else { const fr = Math.round(m - DSP.OPEN[i]); K.status[i] = 'bad'; K.msg[i] = fr >= 0 && fr <= 12 ? `sounds like fret ${fr}, should be ${shape[i] === 0 ? 'open' : 'fret ' + shape[i]}.` : `sounds like ${DSP.name(m)}, should be ${DSP.name(want)}.`; }
+    }
+    if (m != null) K.last = m;
+    K.k++; K.phase = 'cool'; K.since = performance.now(); perfPrompt();
+  };
+  const L = listenUI($('#lis'), {
+    label: 'Turn on the mic', stopLabel: 'Turn off the mic',
+    onStart() { res.innerHTML = '<div class="result info">Mic on. Choose <b>Check my strum</b> or <b>String by string</b>.</div>'; },
+    onStop() { stopLoop(); mode = null; },
+    fileHint: '<b>Check my strum</b>: strum once and let it ring. <b>String by string</b>: pluck each string slowly, thick to thin.',
+    onFile(a) {
+      if (mode === 'perf') { // file: segments in order
+        const segs = segments(DSP.track(a.x, a.sr, { fmin: 70, fmax: 1000 })); K = { k: 0, status: [], msg: {} }; let j = 0;
+        order.forEach((i, n) => { const want = DSP.OPEN[i] + shape[i]; const s = segs[j];
+          if (!s) { K.k = n; decide(null); return; }
+          const later = order.slice(n + 1).some((q) => Math.abs(segs[j].m - (DSP.OPEN[q] + shape[q])) < 0.5);
+          if (Math.abs(s.m - want) > 2.5 && later) { K.k = n; decide(null); return; }
+          K.k = n; decide(s.m); j++; });
+        K.k = order.length; perfPrompt(); return;
+      }
+      // strum(s): find each attack, check up to 5 strums, keep the most common verdict
+      const hop = 512, len = a.sr > 30000 ? 32768 : 16384, ons = []; let prev = 0, lastOn = -1e9;
+      for (let i = 0; i + hop < a.x.length; i += hop) { const r = DSP.rms(a.x, i, i + hop); if (r > 0.01 && r > prev * 2.2 && i - lastOn > a.sr * 0.6) { ons.push(i); lastOn = i; } prev = r; }
+      const rs = ons.slice(0, 5).map((o) => o + Math.round(0.08 * a.sr)).filter((st) => st + len <= a.x.length).map((st) => DSP.checkChord(a.x.subarray(st, st + len), a.sr, shape, cur, SHAPES));
+      if (!rs.length) return toast('I couldn’t find a strum. Let the chord ring for 2 seconds.');
+      const tally = (f) => { const c = {}; rs.forEach((r) => { const k = f(r); if (k) c[k] = (c[k] || 0) + 1; }); return Object.entries(c).sort((x, y) => y[1] - x[1])[0]; };
+      const v = tally((r) => r.verdict)[0], pickR = rs.find((r) => r.verdict === v && (v !== 'close' || !r.fix || r.fix.why === (tally((q) => q.fix && q.fix.why) || [])[0])) || rs[0];
+      showStrum(pickR); if (rs.length > 1) res.insertAdjacentHTML('beforeend', `<p class="sub">Checked ${rs.length} strums from your recording.</p>`);
+    }
+  });
+  const needMic = async (m) => {
+    mode = m;
+    if (!Audio.mic.live) { await $('#lis [data-l]').onclick(); if (!Audio.mic.live) { res.innerHTML = `<div class="result info">${m === 'strum' ? 'Record one strum, let it ring for 2 seconds' : 'Record yourself plucking each string slowly, thick to thin'}, then pick the recording below.</div>`; return false; } }
+    return true;
+  };
+  $('#cstrum').onclick = async () => {
+    if (!(await needMic('strum'))) return;
+    res.innerHTML = '<div class="result info"><b>Strum once</b> and let it ring…</div>'; box([]);
+    const hist = []; let armed = performance.now() + 400;
+    loop(() => {
+      const fr = Audio.micFrame(1024, false); if (!fr) return; const r = DSP.rms(fr.x); hist.push(r); if (hist.length > 8) hist.shift();
+      if (performance.now() < armed) return;
+      const floor = Math.min(...hist);
+      if (r > 0.02 && r > floor * 4) {
+        stopLoop(); res.innerHTML = '<div class="result info">Listening to it ring…</div>';
+        const wait = (32768 / Audio.ac().sampleRate) * 1000 + 120;
+        setTimeout(() => { const raw = Audio.micRaw(); if (raw) showStrum(DSP.checkChord(raw.x, raw.sr, shape, cur, SHAPES)); }, wait);
+      }
+    }, 20);
+  };
+  $('#cperf').onclick = async () => {
+    if (!(await needMic('perf'))) return;
+    K = { k: 0, status: order.reduce((o, i) => ((o[i] = 'wait'), o), []), msg: {}, phase: 'cool', since: performance.now(), stable: [], hist: [], last: null };
+    pr.reset(); perfPrompt();
+    loop(() => {
+      if (mode !== 'perf' || K.k >= order.length) return;
+      const fr = Audio.micFrame(1024, false); const r = fr ? DSP.rms(fr.x) : 0; K.hist.push(r); if (K.hist.length > 6) K.hist.shift();
+      const now = performance.now();
+      if (K.phase === 'cool') { if (now - K.since > 300) { K.phase = 'arm'; K.stable = []; } return; }
+      const rd = pr.read(); const m = rd && rd.f0 ? DSP.f2m(rd.f0) : 0;
+      if (m) { if (K.stable.length && Math.abs(m - K.stable[K.stable.length - 1]) > 0.4) K.stable = []; K.stable.push(m); } else K.stable = [];
+      const i = order[K.k], want = DSP.OPEN[i] + shape[i], top = K.stable[K.stable.length - 1];
+      const fresh = (x) => K.last == null || Math.abs(x - K.last) > 0.5 || Math.abs(x - want) < 0.5; // not just the last string still ringing
+      if (K.phase === 'arm') {
+        if (r > 0.01 && r > Math.min(...K.hist) * 1.6) { K.phase = 'hear'; K.t0 = now; K.stable = []; pr.reset(); return; }
+        if (K.stable.length >= 6 && fresh(top)) { activity('guitar'); decide(top); }
+        return;
+      }
+      if (K.stable.length >= 5 && fresh(top)) {
+        activity('guitar');
+        const nx = order[K.k + 1], nWant = nx != null ? DSP.OPEN[nx] + shape[nx] : null;
+        // already on the next string? then this one made no clear sound
+        if (nWant != null && Math.abs(top - want) > 0.6 && Math.abs(top - nWant) < 0.5) { decide(null); decide(top); }
+        else decide(top);
+      }
+      else if (now - K.t0 > 1500) decide(null);
+    }, 40);
+  };
+  /* one-minute changes */
+  const omc = $('#omc'); let pair = p.omc || renderChords.pair || (learned.length >= 2 ? [learned[0], learned[1]] : ['Em', 'A']); renderChords.pair = pair;
+  const opts = (v) => CHORD_ORDER.map((c) => `<option ${c === v ? 'selected' : ''}>${c}</option>`).join('');
+  const drawOmc = () => {
+    const k = pairKey(pair[0], pair[1]), h = S.omc[k] || [], best = h.length ? Math.max(...h.map((x) => x.n)) : 0;
+    omc.innerHTML = `<h2>One-minute changes</h2><p class="sub">Switch between two chords for 60 seconds. Tap the big button <b>each time</b> you land a chord. Aim for 30, then 40+.</p>
+      <div class="row"><select id="oa" class="btn alt" aria-label="First chord">${opts(pair[0])}</select><span>↔</span><select id="ob" class="btn alt" aria-label="Second chord">${opts(pair[1])}</select>
+      <span class="sub">Best: <b>${best || '–'}</b>${h.length ? ` · ${h.length} tries` : ''}</span></div>
+      ${spark(h.slice(-12).map((x) => x.n))}
+      <div class="timer" id="otime">1:00</div>
+      <div class="row" style="margin:10px 0"><button class="btn big grow" id="ogo">Start 60 seconds</button></div>
+      <button class="btn alt countbtn hidden" id="ocount">+1 change <span id="on">0</span></button>`;
+    $('#oa').onchange = (e) => { pair = [e.target.value, pair[1]]; renderChords.pair = pair; drawOmc(); };
+    $('#ob').onchange = (e) => { pair = [pair[0], e.target.value]; renderChords.pair = pair; drawOmc(); };
+    let n = 0, end = 0, tm = 0;
+    $('#ogo').onclick = () => {
+      if (pair[0] === pair[1]) return toast('Pick two different chords');
+      n = 0; $('#on').textContent = 0; $('#ocount').classList.remove('hidden'); $('#ogo').disabled = true;
+      Audio.click(Audio.now() + 0.02, true); end = performance.now() + 60000;
+      tm = setInterval(() => {
+        const left = Math.max(0, end - performance.now()); $('#otime').textContent = '0:' + String(Math.ceil(left / 1000)).padStart(2, '0'); activity('guitar');
+        if (left <= 0) { clearInterval(tm); Audio.click(Audio.now() + 0.02, true); Audio.click(Audio.now() + 0.2, true);
+          (S.omc[k] = S.omc[k] || []).push({ d: dayKey(), n }); S.omc[k] = S.omc[k].slice(-40); save();
+          toast(n > best ? `New best: ${n} changes!` : `${n} changes. Best is ${Math.max(best, n)}.`); drawOmc(); }
+      }, 200);
+    };
+    $('#ocount').onclick = () => { n++; $('#on').textContent = n; };
+    onLeave(() => clearInterval(tm));
+  };
+  drawOmc();
+  onLeave(() => { L.stop(); stopAll(); });
+}
+
+/* ================= RHYTHM ================= */
+function renderRhythm(p) {
+  const R = renderRhythm.R || (renderRhythm.R = { bpm: 60, pat: 'faithful', prog: 'none', hear: false });
+  if (p.bpm) R.bpm = p.bpm; if (p.pat) R.pat = p.pat; if (p.prog) R.prog = p.prog;
+  view.innerHTML = `<div class="wrap band"><h1>Rhythm</h1>
+    <div class="nowchord" id="nowc"></div>
+    <div class="beats" id="beats"></div>
+    <div class="bpm"><button class="iconbtn" id="bm" aria-label="Slower">−</button><div class="v" id="bv">${R.bpm}</div><button class="iconbtn" id="bp" aria-label="Faster">+</button></div>
+    <p class="sub" style="text-align:center;margin:0">beats per minute</p>
+    <input type="range" min="40" max="160" value="${R.bpm}" id="br" aria-label="Tempo">
+    <div class="row" style="margin:8px 0 14px"><button class="btn big grow" id="bgo">Start</button><label class="row" style="gap:6px;font-size:15px"><input type="checkbox" id="bh" ${R.hear ? 'checked' : ''} style="width:22px;height:22px"> Play the strums for me</label></div>
+    <h3>Strum pattern</h3><div class="chips">${Object.entries(PATTERNS).map(([k, v]) => `<button data-p="${k}" aria-pressed="${k === R.pat}">${v.name}</button>`).join('')}</div>
+    <h3>Chords (one per bar)</h3><div class="chips">${Object.entries(PROGRESSIONS).map(([k, v]) => `<button data-g="${k}" aria-pressed="${k === R.prog}">${v.name}</button>`).join('')}</div>
+    <div class="card" style="margin-top:14px"><h2>Tap test</h2><p class="sub">Start the metronome, then tap the pad <b>with each click</b>. 16 taps.</p>
+      <button class="pad" id="pad">Tap here</button><div id="tapres" aria-live="polite"></div></div>
+    <p class="sub">Keep your strumming hand moving <b>down-up all the time</b>, like a pendulum. Gaps are “air strums”.</p></div>`;
+  const pat = () => PATTERNS[R.pat].slots, prog = () => PROGRESSIONS[R.prog].chords;
+  const drawBeats = (on = -1) => { $('#beats').innerHTML = pat().map((s, i) => `<div class="${i === on ? 'on' : ''} ${s ? '' : 'air'}"><b>${s === 'D' ? '↓' : s === 'U' ? '↑' : '·'}</b>${i % 2 ? '&' : i / 2 + 1}</div>`).join(''); };
+  const drawChord = (bar) => { const c = prog(); $('#nowc').innerHTML = c.length ? `<b>${c[bar % c.length]}</b><span class="sub">next: ${c[(bar + 1) % c.length]}</span>` : '<span class="sub">Count out loud: 1 & 2 & 3 & 4 &</span>'; };
+  drawBeats(); drawChord(0);
+  const setBpm = (v) => { R.bpm = clamp(Math.round(v), 40, 160); $('#bv').textContent = R.bpm; $('#br').value = R.bpm; };
+  $('#bm').onclick = () => setBpm(R.bpm - 4); $('#bp').onclick = () => setBpm(R.bpm + 4); $('#br').oninput = (e) => setBpm(+e.target.value);
+  $('#bh').onchange = (e) => (R.hear = e.target.checked);
+  $$('[data-p]').forEach((b) => (b.onclick = () => { R.pat = b.dataset.p; $$('[data-p]').forEach((x) => x.setAttribute('aria-pressed', x === b)); drawBeats(); }));
+  $$('[data-g]').forEach((b) => (b.onclick = () => { R.prog = b.dataset.g; $$('[data-g]').forEach((x) => x.setAttribute('aria-pressed', x === b)); drawChord(0); }));
+  let playing = false, timer = 0, next = 0, slot = 0, bar = 0; const q = []; const beatsPerf = [];
+  const sched = () => {
+    const c = Audio.ac();
+    while (next < c.currentTime + 0.12) {
+      if (slot % 2 === 0) { Audio.click(next, slot === 0); beatsPerf.push(performance.now() + (next - c.currentTime) * 1000 + ((c.outputLatency || c.baseLatency || 0) * 1000)); if (beatsPerf.length > 64) beatsPerf.shift(); }
+      const s = pat()[slot], ch = prog().length ? prog()[bar % prog().length] : 'Em';
+      if (R.hear && s) Audio.strum(CHORDS[ch].shape, next - c.currentTime - 0.02, s === 'U');
+      q.push({ t: next, slot, bar });
+      next += 30 / R.bpm; slot = (slot + 1) % 8; if (slot === 0) bar++;
+    }
+  };
+  const start = () => { const c = Audio.ac(); playing = true; next = c.currentTime + 0.1; slot = 0; bar = 0; q.length = 0; timer = setInterval(sched, 25); sched(); $('#bgo').textContent = 'Stop'; $('#bgo').classList.add('on');
+    loop(() => { const now = Audio.now(); let cur = null; while (q.length && q[0].t <= now) cur = q.shift(); if (cur) { drawBeats(cur.slot); if (cur.slot === 0) drawChord(cur.bar); if (cur.slot % 2 === 0) activity('rhythm'); } }, 16); };
+  const stop = () => { playing = false; clearInterval(timer); stopLoop(); $('#bgo').textContent = 'Start'; $('#bgo').classList.remove('on'); drawBeats(); };
+  $('#bgo').onclick = () => (playing ? stop() : start());
+  let taps = [];
+  $('#pad').onpointerdown = (e) => {
+    e.preventDefault(); if (!playing) return toast('Start the metronome first');
+    const t = performance.now(); const near = beatsPerf.reduce((b, x) => (Math.abs(x - t) < Math.abs(b - t) ? x : b), Infinity);
+    if (Math.abs(near - t) < 30000 / R.bpm) taps.push(t - near);
+    $('#pad').textContent = `${taps.length} / 16`;
+    if (taps.length >= 16) {
+      const mean = taps.reduce((a, b) => a + b, 0) / taps.length, sd = Math.sqrt(taps.reduce((a, b) => a + (b - mean) ** 2, 0) / taps.length);
+      $('#tapres').innerHTML = `<div class="result ${sd < 45 ? 'good' : 'info'}">On average you were <b>${Math.abs(Math.round(mean))} ms ${mean < 0 ? 'early' : 'late'}</b>, and your taps varied by about <b>${Math.round(sd)} ms</b>. ${sd < 30 ? 'Very steady!' : sd < 60 ? 'Pretty steady — keep going.' : 'Try counting out loud with the clicks.'}<br><span class="sub">Bluetooth headphones add delay, so “late” may be the headphones.</span></div>`;
+      taps = []; $('#pad').textContent = 'Tap here';
+    }
+  };
+  onLeave(stop);
+}
+
+/* ================= PROGRESS ================= */
+function renderProgress() {
+  const days = []; const d = new Date(); d.setDate(d.getDate() - 6);
+  for (let i = 0; i < 7; i++) { const k = dayKey(d); days.push({ k, l: d.toLocaleDateString(undefined, { weekday: 'short' }).slice(0, 2), m: Math.round(((S.days[k] && S.days[k].s) || 0) / 60) }); d.setDate(d.getDate() + 1); }
+  const mx = Math.max(15, ...days.map((x) => x.m));
+  const omcRows = Object.entries(S.omc).map(([k, h]) => ({ k, best: Math.max(...h.map((x) => x.n)), last: h[h.length - 1].n, n: h.length })).sort((a, b) => b.best - a.best);
+  const sing = S.sing.slice(-8).reverse();
+  view.innerHTML = `<div class="wrap band"><h1>Progress</h1>
+    <div class="kpis"><div><b>${streak()}</b>day streak</div><div><b>${weekMinutes()}</b>min this week</div><div><b>${LESSONS.filter((l) => S.done[l.id]).length}/${LESSONS.length}</b>lessons</div></div>
+    <div class="card"><h3>Practice minutes, last 7 days</h3><div class="bars">${days.map((x, i) => `<div class="${i === 6 ? 'cur' : ''}"><span>${x.m || ''}</span><i style="height:${(x.m / mx) * 100}%"></i>${x.l}</div>`).join('')}</div>
+      <p class="sub" style="margin:4px 0 0">Counted only while you play, sing or answer — not while the app sits open.</p></div>
+    <div class="card"><h3>One-minute changes</h3>${omcRows.length ? `<table><thead><tr><th>Pair</th><th class="n">Best</th><th class="n">Last</th><th class="n">Tries</th></tr></thead><tbody>${omcRows.map((r) => `<tr><td>${r.k.replace('-', ' ↔ ')}</td><td class="n"><b>${r.best}</b></td><td class="n">${r.last}</td><td class="n">${r.n}</td></tr>`).join('')}</tbody></table>` : '<p class="sub">None yet — find them under Chords.</p>'}</div>
+    <div class="card"><h3>Singing</h3>${sing.length ? `<table><thead><tr><th>Exercise</th><th class="n">Matched</th><th class="n">Avg off</th></tr></thead><tbody>${sing.map((r) => `<tr><td>${esc(r.mode)} <span class="sub">${r.d.slice(5)}</span></td><td class="n">${r.ok}/${r.n}</td><td class="n">${r.e == null ? '–' : r.e + 'c'}</td></tr>`).join('')}</tbody></table>` : '<p class="sub">No singing sessions yet.</p>'}
+      <p class="sub" style="margin:8px 0 0">100 cents = one note step. Under 25 cents sounds in tune to most listeners.</p></div>
+    <div class="card"><h3>Voice range</h3><p>${S.range ? `<b>${DSP.name(S.range.lo)} – ${DSP.name(S.range.hi)}</b>` : 'Not measured yet.'} <a href="#sing" id="mr">Measure</a></p>
+      <p class="sub" style="margin:0">Ear game level: higher/lower gap ${S.ear.hl} steps · best streak ${S.ear.best || 0}</p></div>
+    <div class="card set"><h2>Settings</h2>
+      <label>How close counts as “on the note”<select id="tol" class="btn alt">${[[50, 'Relaxed ±50c'], [35, 'Getting there ±35c'], [20, 'Precise ±20c']].map(([v, l]) => `<option value="${v}" ${S.set.tol === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label>Left-handed chord boxes<input type="checkbox" id="left" ${S.set.left ? 'checked' : ''} style="width:26px;height:26px"></label>
+      <label>Voice<select id="voice" class="btn alt"><option value="">Not set</option><option value="low" ${S.set.voice === 'low' ? 'selected' : ''}>Lower</option><option value="high" ${S.set.voice === 'high' ? 'selected' : ''}>Higher</option></select></label>
+      <label>Reference pitch (A4)<span class="row"><button class="iconbtn" id="a4m">−</button><b id="a4v">${S.set.a4} Hz</b><button class="iconbtn" id="a4p">+</button></span></label>
+      <p class="sub" style="margin:0">${syncWhere === 'account' ? 'Progress is saved to your account.' : 'Progress is saved in this browser only.'}</p>
+      <div><button class="btn ghost" id="reset">Reset all progress</button><div id="rconf"></div></div></div></div>`;
+  $('#mr').onclick = (e) => { e.preventDefault(); go({ v: 'sing', mode: 'range' }); };
+  $('#tol').onchange = (e) => { S.set.tol = +e.target.value; save(); };
+  $('#left').onchange = (e) => { S.set.left = e.target.checked; save(); };
+  $('#voice').onchange = (e) => { S.set.voice = e.target.value; save(); };
+  const a4 = (v) => { S.set.a4 = clamp(v, 430, 450); DSP.state.a4 = S.set.a4; $('#a4v').textContent = S.set.a4 + ' Hz'; save(); };
+  $('#a4m').onclick = () => a4(S.set.a4 - 1); $('#a4p').onclick = () => a4(S.set.a4 + 1);
+  $('#reset').onclick = () => { $('#rconf').innerHTML = `<p style="margin:10px 0 6px">This clears lessons, scores and your range. Sure?</p><div class="row"><button class="btn" id="ry">Yes, reset</button><button class="btn alt" id="rn">Keep it</button></div>`; $('#ry').onclick = () => { S = DEF(); DSP.state.a4 = 440; save(); toast('Progress reset'); renderProgress(); }; $('#rn').onclick = () => ($('#rconf').innerHTML = ''); };
+}
+
+/* ================= boot ================= */
+$('#tabs').innerHTML = [['learn', 'Learn'], ['tune', 'Tune'], ['sing', 'Sing'], ['chords', 'Chords'], ['rhythm', 'Rhythm']].map(([v, l]) => `<a href="#${v}" data-v="${v}">${ICON[v]}<span>${l}</span></a>`).join('');
+$('#progbtn').innerHTML = ICON.progress;
+window.addEventListener('hashchange', route);
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+route(); micChip(); initRemote();
+
+}
+</script></body></html>
