@@ -571,6 +571,7 @@ const SONG_CHART = [['G', 'Twin-kle, twin-kle'], ['C', 'lit-tle'], ['G', 'star,'
 
 /* ===== Audio: sounds out (tones, guitar, clicks) and sound in (mic / recordings) ===== */
 const Audio = (() => {
+  const mic = { stream: null, an: null, buf: null, live: false, blocked: false, why: '' };
   let ctx = null, master = null, voiceWave = null;
   const ksCache = new Map();
   function ac() {
@@ -581,9 +582,28 @@ const Audio = (() => {
       const real = new Float32Array([0, 1, 0.55, 0.3, 0.18, 0.1, 0.06]);
       voiceWave = ctx.createPeriodicWave(real, new Float32Array(real.length));
     }
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    setSession();
+    if (ctx.state !== 'running') ctx.resume().catch(() => {});
     return ctx;
   }
+  /* iPhone: make Web Audio play even with the silent switch on */
+  function setSession() {
+    try { if (navigator.audioSession) navigator.audioSession.type = mic.live ? 'play-and-record' : 'playback'; } catch (e) { /* older iOS */ }
+  }
+  /* unlock audio on the first real tap (iOS needs a sound started inside a tap) */
+  let unlocked = false;
+  function unlock() {
+    if (unlocked) return;
+    const c = ac(); const b = c.createBuffer(1, 1, c.sampleRate), s = c.createBufferSource();
+    s.buffer = b; s.connect(c.destination); s.start(0);
+    c.resume().then(() => { if (c.state === 'running') unlocked = true; }).catch(() => {});
+    try { // a silent media element switches iOS to the "media" channel, which ignores the silent switch
+      const a = document.createElement('audio');
+      a.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+      a.setAttribute('playsinline', ''); a.play().catch(() => {});
+    } catch (e) { /* ignore */ }
+  }
+  ['touchend', 'click', 'keydown'].forEach((ev) => document.addEventListener(ev, unlock, { capture: true, passive: true }));
   /* a soft, voice-like reference tone */
   function tone(midi, dur = 1.2, when = 0, vol = 0.32) {
     const c = ac(), t = c.currentTime + 0.02 + when;
@@ -634,7 +654,7 @@ const Audio = (() => {
   }
 
   /* ---- Microphone ---- */
-  const mic = { stream: null, an: null, buf: null, live: false, blocked: false, why: '' };
+  
   async function micStart() {
     if (mic.live) return true;
     if (mic.blocked) return false;
@@ -646,14 +666,14 @@ const Audio = (() => {
       mic.an = c.createAnalyser(); mic.an.fftSize = 32768; mic.an.smoothingTimeConstant = 0;
       src.connect(mic.an);
       mic.buf = new Float32Array(mic.an.fftSize);
-      mic.live = true; return true;
+      mic.live = true; setSession(); return true;
     } catch (e) {
       mic.blocked = true; mic.why = (e && e.name) || 'blocked'; return false;
     }
   }
   function micStop() {
     if (mic.stream) mic.stream.getTracks().forEach((t) => t.stop());
-    mic.stream = null; mic.an = null; mic.live = false;
+    mic.stream = null; mic.an = null; mic.live = false; setSession();
   }
   /* latest n samples, downsampled by 2 when the rate is high (cheaper YIN) */
   function micFrame(n, half = true) {
@@ -821,7 +841,7 @@ function renderLearn() {
       ${LESSONS.map((l, i) => l.u !== ui ? '' : `<a class="fret ${S.done[l.id] ? 'done' : ''} ${cur === l ? 'now' : ''}" href="#lesson-${l.id}">
         <span class="num">${S.done[l.id] ? ICON.check : i + 1}</span><span class="t">${esc(l.t)}<small>${l.min} min${cur === l ? ' · up next' : ''}</small></span></a>`).join('')}
     </div>`).join('')}</div>
-    <p class="sub" style="margin-top:14px">No sound? Turn off your phone’s <b>silent mode</b> and turn the volume up.</p>
+    <p class="sub" style="margin-top:14px">No sound? Turn the <b>volume up</b>, flip the <b>silent switch</b> off, and tap a button once more.</p>
   </div>`;
   $$('.plan li').forEach((li) => {
     const it = plan.find((x) => x.id === li.dataset.id);
@@ -864,7 +884,7 @@ function keyboard(el, lo, hi, opts = {}) {
     b.style.left = `calc(${(wi / W) * 100}% - ${(100 / W) * 0.32}%)`; b.style.width = `${(100 / W) * 0.64}%`;
     k.appendChild(b);
   });
-  $$('button', k).forEach((b) => (b.onpointerdown = (e) => { e.preventDefault(); const m = +b.dataset.m; Audio.tone(m, 0.9); b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 300); opts.onKey && opts.onKey(m); }));
+  $$('button', k).forEach((b) => (b.onclick = (e) => { const m = +b.dataset.m; Audio.tone(m, 0.9); b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 300); opts.onKey && opts.onKey(m); }));
 }
 const ART = {
   wave(el) {
