@@ -588,7 +588,7 @@ const Audio = (() => {
   }
   /* iPhone: make Web Audio play even with the silent switch on */
   function setSession() {
-    try { if (navigator.audioSession) navigator.audioSession.type = mic.live ? 'play-and-record' : 'playback'; } catch (e) { /* older iOS */ }
+    try { if (navigator.audioSession) navigator.audioSession.type = (mic.live || mic.starting) ? 'play-and-record' : 'playback'; } catch (e) { /* older iOS */ }
   }
   /* unlock audio on the first real tap (iOS needs a sound started inside a tap) */
   let unlocked = false;
@@ -660,14 +660,22 @@ const Audio = (() => {
     if (mic.blocked) return false;
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('unsupported');
-      const c = ac();
-      mic.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      mic.starting = true; const c = ac(); // recording needs the "play-and-record" session on iPhone
+      const want = { audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } };
+      try { mic.stream = await navigator.mediaDevices.getUserMedia(want); }
+      catch (e1) {
+        if (e1 && e1.name === 'NotAllowedError') throw e1;
+        try { if (navigator.audioSession) navigator.audioSession.type = 'auto'; } catch (e) { /* */ }
+        mic.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      if (c.state !== 'running') await c.resume().catch(() => {});
       const src = c.createMediaStreamSource(mic.stream);
       mic.an = c.createAnalyser(); mic.an.fftSize = 32768; mic.an.smoothingTimeConstant = 0;
       src.connect(mic.an);
       mic.buf = new Float32Array(mic.an.fftSize);
-      mic.live = true; setSession(); return true;
+      mic.live = true; mic.starting = false; setSession(); return true;
     } catch (e) {
+      mic.starting = false; setSession();
       mic.blocked = true; mic.why = (e && e.name) || 'blocked'; return false;
     }
   }
