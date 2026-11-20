@@ -990,14 +990,15 @@ function listenUI(host, o) {
   <div class="fallback hidden"><h3>Record and check</h3>
   <p>Live listening is switched off in this window. Record yourself (camera video or voice memo app), then pick the recording. ${o.fileHint || ''}</p>
   <label class="btn alt">Choose a recording<input type="file" accept="audio/*,video/*" class="vh"></label>
-  <p class="sub" style="margin:10px 0 0">For live feedback, open the app’s HTML file in Chrome, Edge or Safari.</p></div>`;
+  <p class="sub" style="margin:10px 0 0" data-why>For live feedback, open the app’s HTML file in Chrome, Edge or Safari.</p>
+  <button class="btn ghost" data-retry style="margin-top:10px">Try the mic again</button></div>`;
   const b = $('[data-l]', host), fb = $('.fallback', host); let on = false;
   const setOn = (v) => { on = v; b.textContent = v ? (o.stopLabel || 'Stop listening') : (o.label || 'Start listening'); b.classList.toggle('on', v); };
   b.onclick = async () => {
     if (on) { setOn(false); o.onStop && o.onStop(); stopAll(); return; }
     Audio.ac();
     const ok = await Audio.micStart(); micChip();
-    if (!ok) { fb.classList.remove('hidden'); b.disabled = true; b.textContent = 'Live mic not available here'; return; }
+    if (!ok) { fb.classList.remove('hidden'); b.disabled = true; b.textContent = 'Live mic not available here'; why(); return; }
     setOn(true); o.onStart();
   };
   $('input', fb).onchange = async (e) => {
@@ -1006,7 +1007,14 @@ function listenUI(host, o) {
     try { const a = await Audio.decodeFile(f); o.onFile(a); } catch (err) { toast('Couldn’t read that file. Try a voice memo (.m4a) or a video.'); }
     e.target.value = '';
   };
-  if (Audio.mic.blocked) { fb.classList.remove('hidden'); b.disabled = true; b.textContent = 'Live mic not available here'; }
+  const why = () => {
+    const w = $('[data-why]', fb), n = Audio.mic.why;
+    if (window.top === window && n === 'NotAllowedError') w.innerHTML = '<b>The mic permission was refused.</b> In Safari: tap <b>aA</b> (or the page menu) in the address bar → <b>Website Settings</b> → <b>Microphone → Allow</b>. Also check iPhone <b>Settings → Apps → Safari → Microphone</b>. Then tap “Try the mic again”.';
+    else if (window.top === window && n === 'NotFoundError') w.innerHTML = '<b>No microphone found.</b> If headphones are plugged in, unplug them and try again.';
+    else if (window.top === window && n) w.innerHTML = `<b>The mic couldn’t start</b> (${esc(n)}). Close other apps using the mic (calls, voice memos) and try again.`;
+  };
+  $('[data-retry]', fb).onclick = async () => { Audio.mic.blocked = false; Audio.mic.why = ''; b.disabled = false; const ok = await Audio.micStart(); micChip(); if (ok) { fb.classList.add('hidden'); setOn(true); o.onStart(); } else { why(); toast('Still no mic access'); } };
+  if (Audio.mic.blocked) { fb.classList.remove('hidden'); b.disabled = true; b.textContent = 'Live mic not available here'; why(); }
   return { stop() { if (on) { setOn(false); o.onStop && o.onStop(); } }, isOn: () => on };
 }
 
