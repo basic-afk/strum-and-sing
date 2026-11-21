@@ -1321,13 +1321,15 @@ function singFree(el) {
   onLeave(() => { L.stop(); stopAll(); });
 }
 
+function resetRange() { S.range = null; save(); toast('Range cleared — measure it again'); }
 function singRangeMode(el) {
   const R = { step: 'low', vals: [], lo: S.range ? S.range.lo : null, hi: S.range ? S.range.hi : null, t: 0 };
   el.innerHTML = `<div class="card"><h3 id="rh">Step 1: your lowest easy note</h3>
     <p id="rp">Sing “ah” and slide <b>down slowly</b>. Stop where it starts to feel croaky. Don’t push.</p>
     <div class="row" style="align-items:baseline;gap:16px"><span style="font-size:40px;font-weight:700" id="rn">–</span><span class="sub" id="rs"></span></div>
     <div class="row" style="margin-top:8px"><button class="btn alt" id="rdone">That’s my edge</button><button class="btn ghost" id="rskip">Switch step</button></div></div>
-    <div id="lis"></div><div class="art" id="rk" style="margin-top:12px"></div><div id="rres"></div>`;
+    <div id="lis"></div><div class="art" id="rk" style="margin-top:12px"></div><div id="rres"></div>
+    ${S.range ? `<div class="card" style="margin-top:12px"><p style="margin:0 0 8px">Saved range: <b>${DSP.name(S.range.lo)} – ${DSP.name(S.range.hi)}</b>. Someone else used the app, or it feels wrong?</p><button class="btn ghost" id="rreset">Reset my range</button></div>` : ''}`;
   const pr = PitchReader({ smooth: 7 });
   const kb = () => keyboard($('#rk'), 40, 79, { labels: true, mark: (m) => R.lo != null && R.hi != null && m >= R.lo && m <= R.hi });
   const res = () => {
@@ -1344,6 +1346,7 @@ function singRangeMode(el) {
     $('#rp').innerHTML = R.step === 'low' ? 'Sing “ah” and slide <b>down slowly</b>. Stop where it starts to feel croaky.' : 'Now slide <b>up slowly</b> on “ah” or “oo”. Stop before it strains or squeaks.';
     res();
   };
+  if ($('#rreset')) $('#rreset').onclick = () => { resetRange(); go({ v: 'sing', mode: 'range' }); };
   $('#rdone').onclick = fin; $('#rskip').onclick = () => { R.vals = []; fin(); };
   res();
   const L = listenUI($('#lis', el), {
@@ -1646,7 +1649,8 @@ function renderProgress() {
     <div class="card"><h3>One-minute changes</h3>${omcRows.length ? `<table><thead><tr><th>Pair</th><th class="n">Best</th><th class="n">Last</th><th class="n">Tries</th></tr></thead><tbody>${omcRows.map((r) => `<tr><td>${r.k.replace('-', ' ↔ ')}</td><td class="n"><b>${r.best}</b></td><td class="n">${r.last}</td><td class="n">${r.n}</td></tr>`).join('')}</tbody></table>` : '<p class="sub">None yet — find them under Chords.</p>'}</div>
     <div class="card"><h3>Singing</h3>${sing.length ? `<table><thead><tr><th>Exercise</th><th class="n">Matched</th><th class="n">Avg off</th></tr></thead><tbody>${sing.map((r) => `<tr><td>${esc(r.mode)} <span class="sub">${r.d.slice(5)}</span></td><td class="n">${r.ok}/${r.n}</td><td class="n">${r.e == null ? '–' : r.e + 'c'}</td></tr>`).join('')}</tbody></table>` : '<p class="sub">No singing sessions yet.</p>'}
       <p class="sub" style="margin:8px 0 0">100 cents = one note step. Under 25 cents sounds in tune to most listeners.</p></div>
-    <div class="card"><h3>Voice range</h3><p>${S.range ? `<b>${DSP.name(S.range.lo)} – ${DSP.name(S.range.hi)}</b>` : 'Not measured yet.'} <a href="#sing" id="mr">Measure</a></p>
+    <div class="card"><h3>Voice range</h3><p>${S.range ? `<b>${DSP.name(S.range.lo)} – ${DSP.name(S.range.hi)}</b>` : 'Not measured yet.'} <a href="#sing" id="mr">Measure again</a></p>
+      ${S.range ? '<button class="btn ghost" id="rrange" style="margin-bottom:8px">Reset my range</button>' : ''}
       <p class="sub" style="margin:0">Ear game level: higher/lower gap ${S.ear.hl} steps · best streak ${S.ear.best || 0}</p></div>
     <div class="card set"><h2>Settings</h2>
       <label>How close counts as “on the note”<select id="tol" class="btn alt">${[[50, 'Relaxed ±50c'], [35, 'Getting there ±35c'], [20, 'Precise ±20c']].map(([v, l]) => `<option value="${v}" ${S.set.tol === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
@@ -1656,6 +1660,7 @@ function renderProgress() {
       <p class="sub" style="margin:0">${syncWhere === 'account' ? 'Progress is saved to your account.' : 'Progress is saved in this browser only.'}</p>
       <div><button class="btn ghost" id="reset">Reset all progress</button><div id="rconf"></div></div></div></div>`;
   $('#mr').onclick = (e) => { e.preventDefault(); go({ v: 'sing', mode: 'range' }); };
+  if ($('#rrange')) $('#rrange').onclick = () => { resetRange(); renderProgress(); };
   $('#tol').onchange = (e) => { S.set.tol = +e.target.value; save(); };
   $('#left').onchange = (e) => { S.set.left = e.target.checked; save(); };
   $('#voice').onchange = (e) => { S.set.voice = e.target.value; save(); };
