@@ -611,7 +611,7 @@ const Audio = (() => {
   /* unlock audio on the first real tap (iOS needs a sound started inside a tap) */
   let unlocked = false;
   function unlock() {
-    if (unlocked) return;
+    if (unlocked) { if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {}); return; }
     const c = ac(); const b = c.createBuffer(1, 1, c.sampleRate), s = c.createBufferSource();
     s.buffer = b; s.connect(c.destination); s.start(0);
     c.resume().then(() => { if (c.state === 'running') unlocked = true; }).catch(() => {});
@@ -690,14 +690,18 @@ const Audio = (() => {
       const src = c.createMediaStreamSource(mic.stream);
       mic.an = c.createAnalyser(); mic.an.fftSize = 32768; mic.an.smoothingTimeConstant = 0;
       src.connect(mic.an);
+      // Safari only runs nodes that lead to the speakers: route the analyser into a muted gain
+      const sink = c.createGain(); sink.gain.value = 0; mic.an.connect(sink); sink.connect(c.destination); mic.src = src; mic.sink = sink;
       mic.buf = new Float32Array(mic.an.fftSize);
-      mic.live = true; mic.starting = false; setSession(); return true;
+      mic.live = true; mic.starting = false; setSession();
+      mic.track = mic.stream.getAudioTracks()[0]; return true;
     } catch (e) {
       mic.starting = false; setSession();
       mic.blocked = true; mic.why = (e && e.name) || 'blocked'; return false;
     }
   }
   function micStop() {
+    try { if (mic.src) mic.src.disconnect(); if (mic.sink) mic.sink.disconnect(); } catch (e) { /* */ }
     if (mic.stream) mic.stream.getTracks().forEach((t) => t.stop());
     mic.stream = null; mic.an = null; mic.live = false; setSession();
   }
@@ -720,7 +724,9 @@ const Audio = (() => {
     for (let ch = 0; ch < b.numberOfChannels; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < n; i++) x[i] += d[i] / b.numberOfChannels; }
     return { x, sr: b.sampleRate, dur: b.duration };
   }
-  return { ac, tone, pluck, strum, click, mic, micStart, micStop, micFrame, micRaw, decodeFile, now: () => ac().currentTime };
+  function level() { if (!mic.an) return 0; mic.an.getFloatTimeDomainData(mic.buf); let q = 0; for (let i = mic.buf.length - 2048; i < mic.buf.length; i++) q += mic.buf[i] * mic.buf[i]; return Math.sqrt(q / 2048); }
+  function state() { return { ctx: ctx ? ctx.state : 'none', track: mic.track ? mic.track.readyState + (mic.track.muted ? ' muted' : '') : 'none', session: navigator.audioSession ? navigator.audioSession.type : 'n/a' }; }
+  return { level, state, ac, tone, pluck, strum, click, mic, micStart, micStop, micFrame, micRaw, decodeFile, now: () => ac().currentTime };
 })();
 
 /* ===== App core: helpers, storage, router, Learn path, lessons ===== */
@@ -823,7 +829,19 @@ function route() {
   if (h.startsWith('lesson-')) return renderLesson(h.slice(7));
   ({ learn: renderLearn, tune: renderTune, sing: renderSing, chords: renderChords, rhythm: renderRhythm, progress: renderProgress }[h] || renderLearn)(p);
 }
-function micChip() { const c = $('#micchip'); c.className = 'chip-mic' + (Audio.mic.live ? ' live' : ''); c.textContent = Audio.mic.live ? 'Mic on' : Audio.mic.blocked ? 'Record mode' : 'Mic off'; }
+let meterT = 0, silentFor = 0;
+function micChip() {
+  const c = $('#micchip'); c.className = 'chip-mic' + (Audio.mic.live ? ' live' : ''); c.textContent = Audio.mic.live ? 'Mic on' : Audio.mic.blocked ? 'Record mode' : 'Mic off';
+  clearInterval(meterT); silentFor = 0;
+  if (Audio.mic.live) meterT = setInterval(() => { // live level so you can see the mic is hearing you
+    if (!Audio.mic.live) { clearInterval(meterT); return; }
+    const l = Audio.level(), pct = Math.min(100, Math.round(Math.sqrt(l) * 260));
+    c.style.background = `linear-gradient(90deg, var(--ok) ${pct}%, var(--okbg) ${pct}%)`; c.style.color = pct > 45 ? '#fff' : '';
+    silentFor = l < 1e-6 ? silentFor + 1 : 0;
+    if (silentFor === 12) { Audio.ac(); const st = Audio.state(); toast(`The mic is on but sends silence (${st.ctx}, ${st.track}). Tap the screen once, or turn the mic off and on.`); }
+  }, 150);
+  else c.style.background = c.style.color = '';
+}
 
 /* ---------- Learn: today's plan + the neck ---------- */
 const learnedChords = () => { const set = new Set(); LESSONS.forEach((l) => { if (S.done[l.id]) l.go.forEach((g) => { if (g.chord) set.add(g.chord); }); }); return CHORD_ORDER.filter((c) => set.has(c)); };
