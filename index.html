@@ -197,6 +197,16 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media(max-width:600px){h1{font-size:30px}.readout .nn{font-size:56px}.timer{font-size:60px}}
 
+.fig.song{min-height:250px}
+.fig .now{position:absolute;left:46px;top:8px;pointer-events:none;max-width:60%}
+.fig .now .w{font-size:38px;font-weight:700;line-height:1.05;color:var(--ink);text-shadow:0 0 6px var(--panel),0 0 2px var(--panel);overflow-wrap:anywhere}
+.fig .now .nx{font-size:14px;color:var(--muted)}
+.bubbles.strip{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:2px 2px 6px;margin:6px 0;scroll-snap-type:x proximity}
+.bubbles.strip::-webkit-scrollbar{display:none}
+.bubbles.strip button{flex:none}
+.field{width:100%;font-size:16px;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-family:inherit}
+textarea.field{resize:vertical;line-height:1.5}
+
 </style></head><body>
 <header class="top"><div class="wrap">
   <a class="brand" href="#learn"><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c7 0 12 3 12 8 0 8-7 16-12 18C11 27 4 19 4 11c0-5 5-8 12-8z" fill="var(--wood)"/><path d="M11 12h10M11 16h10M11 20h8" stroke="var(--spruce)" stroke-width="2" stroke-linecap="round"/></svg>Strum &amp; Sing</a>
@@ -496,6 +506,8 @@ const MELODIES = {
   three: { name: 'Three steps', notes: [0, 2, 4, 2, 0], syl: ['do', 're', 'mi', 're', 'do'] },
   twinkle: { name: 'Twinkle, twinkle', notes: [0, 0, 7, 7, 9, 9, 7, 5, 5, 4, 4, 2, 2, 0], syl: ['Twin', 'kle', 'twin', 'kle', 'lit', 'tle', 'star', 'how', 'I', 'won', 'der', 'what', 'you', 'are'] },
   ode: { name: 'Ode to Joy', notes: [4, 4, 5, 7, 7, 5, 4, 2, 0, 0, 2, 4, 4, 2, 2], syl: ['mi', 'mi', 'fa', 'so', 'so', 'fa', 'mi', 're', 'do', 'do', 're', 'mi', 'mi', 're', 're'] },
+  grace: { name: 'Amazing Grace (line 1)', notes: [-5, 0, 4, 4, 2, 0, -3, -5, -5, 0, 4, 4, 2, 7], syl: ['A', 'ma', 'zing', 'grace', 'how', 'sweet', 'the', 'sound', 'that', 'saved', 'a', 'wretch', 'like', 'me'] },
+  birthday: { name: 'Happy Birthday', notes: [-5, -5, -3, -5, 0, -1, -5, -5, -3, -5, 2, 0, -5, -5, 7, 4, 0, -1, -3, 5, 5, 4, 0, 2, 0], syl: ['Hap', 'py', 'birth', 'day', 'to', 'you', 'Hap', 'py', 'birth', 'day', 'to', 'you', 'Hap', 'py', 'birth', 'day', 'dear', 'Da', 'ni', 'Hap', 'py', 'birth', 'day', 'to', 'you'] },
   jacques: { name: 'Frère Jacques', notes: [0, 2, 4, 0, 0, 2, 4, 0, 4, 5, 7, 4, 5, 7], syl: ['Frè', 're', 'Jac', 'ques', 'frè', 're', 'Jac', 'ques', 'dor', 'mez', 'vous', 'dor', 'mez', 'vous'] }
 };
 
@@ -717,7 +729,7 @@ function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.re
 
 /* ---------- storage: this device first, your account when available ---------- */
 const KEY = 'strum-sing-v1';
-const DEF = () => ({ v: 1, updated: 0, done: {}, days: {}, omc: {}, sing: [], ear: { hl: 7, sd: 100, iv: 2, best: 0 }, range: null, set: { a4: 440, tol: 50, left: false, voice: '' }, plan: { date: '', ticks: {} } });
+const DEF = () => ({ v: 1, updated: 0, done: {}, days: {}, omc: {}, sing: [], songs: [], ear: { hl: 7, sd: 100, iv: 2, best: 0 }, range: null, set: { a4: 440, tol: 50, left: false, voice: '' }, plan: { date: '', ticks: {} } });
 function merge(base, v) { const o = DEF(); for (const k in o) if (v && v[k] !== undefined) o[k] = (typeof o[k] === 'object' && o[k] && !Array.isArray(o[k])) ? Object.assign(o[k], v[k]) : v[k]; return o; }
 let S = DEF();
 try { const raw = localStorage.getItem(KEY); if (raw) S = merge(DEF(), JSON.parse(raw)); } catch (e) { /* storage unavailable */ }
@@ -1234,27 +1246,64 @@ function singMatch(el, p) {
   onLeave(() => { L.stop(); stopAll(); if (M.n) { S.sing.push({ d: dayKey(), mode: drone ? 'home note' : 'match', n: M.n, ok: M.ok, e: M.all.length ? Math.round(M.all.reduce((a, b) => a + b, 0) / M.all.length) : null }); S.sing = S.sing.slice(-120); save(); } });
 }
 
+/* songs: built-in (public domain) + the ones you add yourself */
+const getMel = (k) => (k && k.startsWith('u:') ? S.songs.find((x) => 'u:' + x.id === k) : MELODIES[k]);
+const SOLF = { do: 0, di: 1, ra: 1, re: 2, ri: 3, me: 3, mi: 4, fa: 5, fi: 6, se: 6, so: 7, sol: 7, si: 8, le: 8, la: 9, li: 10, te: 10, ti: 11 };
+function parseNotes(txt) { // "C4 D E F#4", "do re mi", "C D E" → MIDI numbers; octave follows the previous note when left out
+  const out = []; let prev = 60, bad = [];
+  txt.replace(/[,|]/g, ' ').split(/\s+/).filter(Boolean).forEach((tok) => {
+    const t = tok.toLowerCase(); let pc = null, oct = null, m;
+    if ((m = /^([a-g])([#♯b♭]?)(-?\d)?$/i.exec(tok))) { pc = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 }[m[1].toLowerCase()] + (/[#♯]/.test(m[2]) ? 1 : /[b♭]/.test(m[2]) ? -1 : 0); oct = m[3] != null ? +m[3] : null; }
+    else if ((m = /^([a-z]+)([',]*)$/.exec(t)) && SOLF[m[1]] != null) { pc = SOLF[m[1]]; const up = (m[2].match(/'/g) || []).length, dn = (m[2].match(/,/g) || []).length; oct = null; if (up || dn) { pc += 12 * (up - dn); } }
+    if (pc == null) { bad.push(tok); return; }
+    let midi;
+    if (oct != null) midi = 12 * (oct + 1) + pc;
+    else { midi = prev + ((((pc - prev) % 12) + 18) % 12) - 6; } // nearest to the previous note
+    out.push(midi); prev = midi;
+  });
+  return { notes: out, bad };
+}
+const splitWords = (txt) => txt.replace(/[‐–—]/g, '-').split(/[\s\-]+/).filter(Boolean);
+
 function singSong(el, p) {
-  const key = p.mel || singSong.key || 'five'; singSong.key = key;
-  const mel = MELODIES[key], base = keyFor(mel.notes), seq = mel.notes.map((n) => base + n), tol = S.set.tol;
-  el.innerHTML = `<div class="chips">${Object.entries(MELODIES).map(([k, m]) => `<button data-mel="${k}" aria-pressed="${k === key}">${esc(m.name)}</button>`).join('')}</div>
-    <div class="card"><div class="row" style="justify-content:space-between"><span class="sub">Key note: <b>${DSP.name(base)}</b> · tap a bubble to hear it</span>
-    <label class="row" style="gap:6px;font-size:15px"><input type="checkbox" id="auto" checked style="width:22px;height:22px"> Play each note first</label></div>
-    <div class="bubbles" id="bub">${seq.map((m, i) => `<button data-i="${i}">${esc(mel.syl[i])}<small>${DSP.name(m).replace(/\d/, '')}</small></button>`).join('')}</div>
-    <div class="row"><button class="btn alt" id="whole">Hear the whole tune</button><button class="btn ghost" id="restart">Start over</button></div>
-    <div class="hold"><i id="hold"></i></div><p class="sub" style="margin:0" id="say">The app waits for you on every note. Go slowly.</p></div>
-    ${traceBlock()}<div style="margin-top:12px" id="lis"></div>`;
+  if (p.edit != null) return songEditor(el, p.edit);
+  let key = p.mel || singSong.key || 'five'; if (!getMel(key)) key = 'five'; singSong.key = key;
+  const mel = getMel(key), mine = key.startsWith('u:'), base = keyFor(mel.notes), seq = mel.notes.map((n) => base + n), tol = S.set.tol;
+  const syl = (i) => (mel.syl && mel.syl[i]) || '·';
+  el.innerHTML = `<div class="chips">${Object.entries(MELODIES).map(([k, m]) => `<button data-mel="${k}" aria-pressed="${k === key}">${esc(m.name)}</button>`).join('')}${S.songs.map((m) => `<button data-mel="u:${m.id}" aria-pressed="${'u:' + m.id === key}">★ ${esc(m.name)}</button>`).join('')}<button data-new="1">+ Add a song</button></div>
+    <div class="fig song"><canvas aria-label="Your pitch over time"></canvas>
+      <div class="now"><div class="w" id="nw">${esc(syl(0))}</div><div class="nx" id="nx"></div></div>
+      <div class="over"><div class="nn" id="nn">–</div><div class="cc" id="cc"></div></div><div class="msg" id="msg"></div></div>
+    <div class="hold"><i id="hold"></i></div>
+    <div class="bubbles strip" id="bub">${seq.map((m, i) => `<button data-i="${i}">${esc(syl(i))}<small>${DSP.name(m).replace(/\d/, '')}</small></button>`).join('')}</div>
+    <p class="sub" style="margin:0 0 8px" id="say">The app waits for you on every note. Tap a bubble to hear it.</p>
+    <div id="lis"></div>
+    <div class="row" style="margin-top:10px"><button class="btn alt" id="whole">Hear the tune</button><button class="btn ghost" id="restart">Start over</button>
+      <label class="row" style="gap:6px;font-size:15px"><input type="checkbox" id="auto" checked style="width:22px;height:22px"> Play each note first</label></div>
+    <p class="sub" style="margin-top:8px">Key note <b>${DSP.name(base)}</b> — moved to fit your range.</p>
+    ${mine ? `<div class="row"><button class="btn ghost" id="sedit">Edit this song</button><button class="btn ghost" id="sdel">Delete</button></div><div id="sdc"></div>` : ''}`;
   $$('[data-mel]', el).forEach((b) => (b.onclick = () => go({ v: 'sing', mode: 'song', mel: b.dataset.mel })));
+  $('[data-new]', el).onclick = () => go({ v: 'sing', mode: 'song', edit: '' });
+  if (mine) {
+    $('#sedit').onclick = () => go({ v: 'sing', mode: 'song', edit: mel.id });
+    $('#sdel').onclick = () => { $('#sdc').innerHTML = `<p style="margin:10px 0 6px">Delete “${esc(mel.name)}”?</p><div class="row"><button class="btn" id="sdy">Delete</button><button class="btn alt" id="sdn">Keep it</button></div>`; $('#sdy').onclick = () => { S.songs = S.songs.filter((x) => x !== mel); save(); singSong.key = 'five'; go({ v: 'sing', mode: 'song', mel: 'five' }); }; $('#sdn').onclick = () => ($('#sdc').innerHTML = ''); };
+  }
   const tr = Trace($('canvas', el)), pr = PitchReader();
   tr.set({ lo: Math.min(...seq) - 3, hi: Math.max(...seq) + 3, tol });
   const G = { i: 0, hold: 0, errs: [], res: [], phase: 'idle' };
-  const mark = () => $$('#bub button').forEach((b, i) => { b.className = (i === G.i && G.phase !== 'done' ? 'cur ' : '') + (G.res[i] == null ? '' : Math.abs(G.res[i]) <= tol * 0.6 ? 'ok' : G.res[i] < 0 ? 'lo' : 'hi'); });
-  const target = () => { tr.set({ target: seq[G.i] }); mark(); };
+  const mark = () => {
+    $$('#bub button').forEach((b, i) => { b.className = (i === G.i && G.phase !== 'done' ? 'cur ' : '') + (G.res[i] == null ? '' : Math.abs(G.res[i]) <= tol * 0.6 ? 'ok' : G.res[i] < 0 ? 'lo' : 'hi'); });
+    const done = G.i >= seq.length;
+    $('#nw').textContent = done ? 'Done!' : syl(G.i);
+    $('#nx').textContent = done ? '' : G.i + 1 < seq.length ? 'next: ' + syl(G.i + 1) : 'last one';
+    const cur = $$('#bub button')[Math.min(G.i, seq.length - 1)]; if (cur) { const st = $('#bub'); st.scrollTo({ left: cur.offsetLeft - st.clientWidth / 2 + cur.clientWidth / 2, behavior: 'smooth' }); }
+  };
+  const target = () => { tr.set({ target: G.i < seq.length ? seq[G.i] : null }); mark(); };
   const playCur = () => { G.phase = 'play'; noteOverlay(0); $('#hold').style.width = '0%'; const end = Audio.tone(seq[G.i], 0.9); setTimeout(() => { if (G.phase === 'play') { G.phase = 'listen'; pr.reset(); } }, (end - Audio.now()) * 1000 + 150); };
   const advance = () => {
     G.res[G.i] = G.errs.reduce((a, b) => a + b, 0) / G.errs.length; G.i++; G.hold = 0; G.errs = [];
     if (G.i >= seq.length) {
-      G.phase = 'done'; mark(); chime(); const ok = G.res.filter((e) => Math.abs(e) <= tol * 0.6).length;
+      G.phase = 'done'; target(); chime(); const ok = G.res.filter((e) => Math.abs(e) <= tol * 0.6).length;
       $('#say').innerHTML = `<b class="c-ok">Finished!</b> ${ok} of ${seq.length} notes right in the middle. Blue = a bit low, orange = a bit high.`;
       S.sing.push({ d: dayKey(), mode: mel.name, n: seq.length, ok, e: Math.round(G.res.reduce((a, b) => a + Math.abs(b), 0) / seq.length) }); S.sing = S.sing.slice(-120); save(); return;
     }
@@ -1285,14 +1334,68 @@ function singSong(el, p) {
       const t = DSP.track(a.x, a.sr); tr.set({ target: null }); tr.load(t.map((f) => ({ t: f.t, m: f.f0 ? DSP.f2m(f.f0) : 0 })), a.dur);
       const segs = segments(t); if (segs.length < 2) return toast('I couldn’t find separate notes. Leave short gaps between notes.');
       G.res = []; let j = 0;
-      seq.forEach((m, i) => { // match each target to the next sung note near it
+      seq.forEach((m, i) => {
         while (j < segs.length && Math.abs(octaveFold((segs[j].m - m) * 100)) > 250 && j < segs.length - (seq.length - i)) j++;
         if (j < segs.length) { G.res[i] = octaveFold((segs[j].m - m) * 100); j++; }
       });
-      G.phase = 'done'; G.i = seq.length; mark();
+      G.phase = 'done'; G.i = seq.length; target();
       const ok = G.res.filter((e) => e != null && Math.abs(e) <= tol * 0.6).length;
       $('#say').innerHTML = `From your recording: <b>${ok} of ${seq.length}</b> notes right in the middle.`; activity('voice');
     }
+  });
+  onLeave(() => { L.stop(); stopAll(); });
+}
+
+/* add / edit your own song: sing it in, or type the notes; then add the words */
+function songEditor(el, id) {
+  const old = id ? S.songs.find((x) => x.id === id) : null;
+  const oldNotes = old ? old.notes.map((n) => DSP.name(old.base + n).replace('♯', '#')).join(' ') : '';
+  el.innerHTML = `<div class="card"><h2>${old ? 'Edit song' : 'Add a song'}</h2>
+    <label class="sub" for="sn">Song name</label><input id="sn" class="field" value="${esc(old ? old.name : '')}" placeholder="My song">
+    <h3 style="margin-top:14px">1 · The notes</h3>
+    <p class="sub" style="margin:0 0 8px"><b>Sing it in</b>: sing the tune slowly, one syllable at a time, with tiny gaps. Your own voice works best (backing music confuses it). Or <b>type</b> the notes from sheet music or a tutorial: <i>C D E C</i>, <i>A3 C#4</i> or <i>do re mi</i>.</p>
+    <div id="lis"></div>
+    <div class="fig" style="min-height:180px;margin:10px 0"><canvas aria-label="What you sang"></canvas><div class="over"><div class="nn" id="nn">–</div><div class="cc" id="cc"></div></div><div class="msg" id="msg"></div></div>
+    <textarea id="snotes" class="field" rows="3" placeholder="e.g. E3 G3 A3 A3 G3">${esc(oldNotes)}</textarea>
+    <div class="row" style="margin-top:6px"><button class="btn alt" id="splay">Play these notes</button><span class="sub" id="scount"></span></div>
+    <h3 style="margin-top:14px">2 · The words</h3>
+    <p class="sub" style="margin:0 0 8px">Type the words with one syllable per note. Split syllables with a space or a dash: <i>won-der-ful</i>.</p>
+    <textarea id="swords" class="field" rows="3" placeholder="Words for each note">${esc(old && old.syl ? old.syl.join(' ') : '')}</textarea>
+    <div class="bubbles" id="sprev"></div>
+    <div class="row" style="margin-top:10px"><button class="btn big" id="ssave">Save song</button><button class="btn ghost" id="scancel">Cancel</button></div></div>`;
+  const tr = Trace($('canvas', el)), pr = PitchReader({ smooth: 5 }); const r = singRange();
+  tr.set({ lo: r.lo - 2, hi: r.hi + 2, follow: true, target: null });
+  let frames = [], t0 = 0;
+  const preview = () => {
+    const { notes, bad } = parseNotes($('#snotes').value), w = splitWords($('#swords').value);
+    $('#scount').innerHTML = `${notes.length} notes · ${w.length} syllables${bad.length ? ` · <b class="c-high">not understood: ${esc(bad.slice(0, 4).join(' '))}</b>` : ''}${notes.length && w.length && notes.length !== w.length ? ' · <b class="c-high">counts differ</b>' : ''}`;
+    $('#sprev').innerHTML = notes.map((m, i) => `<button data-i="${i}">${esc(w[i] || '·')}<small>${DSP.name(m)}</small></button>`).join('');
+    $$('#sprev button').forEach((b) => (b.onclick = () => Audio.tone(notes[+b.dataset.i], 0.7)));
+    return { notes, w };
+  };
+  const fromTrack = (t) => {
+    const segs = segments(t); if (!segs.length) return toast('No clear notes found. Sing a bit louder and slower.');
+    $('#snotes').value = segs.map((x) => DSP.name(Math.round(x.m)).replace('♯', '#')).join(' '); preview();
+    toast(`Found ${segs.length} notes — check them by ear`);
+  };
+  $('#snotes').oninput = preview; $('#swords').oninput = preview;
+  $('#splay').onclick = () => preview().notes.forEach((m, i) => Audio.tone(m, 0.45, i * 0.5));
+  $('#scancel').onclick = () => go({ v: 'sing', mode: 'song', mel: old ? 'u:' + old.id : singSong.key });
+  $('#ssave').onclick = () => {
+    const { notes, w } = preview(), name = $('#sn').value.trim() || 'My song';
+    if (notes.length < 2) return toast('Add at least two notes');
+    const song = old || { id: Date.now().toString(36) };
+    Object.assign(song, { name, base: notes[0], notes: notes.map((m) => m - notes[0]), syl: notes.map((_, i) => w[i] || '·') });
+    if (!old) S.songs.push(song); save(); toast('Song saved');
+    go({ v: 'sing', mode: 'song', mel: 'u:' + song.id });
+  };
+  preview();
+  const L = listenUI($('#lis', el), {
+    label: 'Sing it in', stopLabel: 'Stop — turn it into notes',
+    onStart() { frames = []; t0 = performance.now(); tr.live(); loop(() => { const rd = pr.read(); if (!rd) return; const m = rd.f0 ? DSP.f2m(rd.f0) : 0; tr.push(m); noteOverlay(m, null); frames.push({ t: (performance.now() - t0) / 1000, f0: rd.f0 }); if (m) activity('voice'); }); },
+    onStop() { stopLoop(); fromTrack(frames); },
+    fileHint: 'Record yourself singing the tune slowly.',
+    onFile(a) { const t = DSP.track(a.x, a.sr); tr.load(t.map((f) => ({ t: f.t, m: f.f0 ? DSP.f2m(f.f0) : 0 })), a.dur); fromTrack(t); }
   });
   onLeave(() => { L.stop(); stopAll(); });
 }
