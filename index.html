@@ -1323,7 +1323,10 @@ function getMel(k) {
 function singSong(el, p) {
   if (p.edit != null) return songEditor(el, p.edit);
   let key = p.mel || singSong.key || 'five'; if (!getMel(key)) key = 'five'; singSong.key = key;
-  const mel = getMel(key), mine = !!mel.own, orig = mine && singSong.orig !== false, base = orig ? mel.own.base : keyFor(mel.notes), seq = mel.notes.map((n) => base + n), tol = S.set.tol;
+  const mel = getMel(key), mine = !!mel.own, orig = mine && singSong.orig === true;
+  const SH = singSong.shift || (singSong.shift = {}), shift = SH[key] || 0;
+  const base = (orig ? mel.own.base : keyFor(mel.notes)) + shift, seq = mel.notes.map((n) => base + n), tol = S.set.tol;
+  const rng = singRange(), outLo = seq.filter((m) => m < rng.lo).length, outHi = seq.filter((m) => m > rng.hi).length;
   const timed = singSong.timed || false, speed = singSong.speed || 0.75;
   const syl = (i) => (mel.syl && mel.syl[i]) || '·';
   el.innerHTML = `<div class="chips">${Object.entries(MELODIES).map(([k, m]) => `<button data-mel="${k}" aria-pressed="${k === key}">${esc(m.name)}</button>`).join('')}${S.songs.map((m) => `<button data-mel="u:${m.id}" aria-pressed="${'u:' + m.id === key}">★ ${esc(m.name)}</button>`).join('')}<button data-new="1">+ Add a song</button></div>
@@ -1338,14 +1341,25 @@ function singSong(el, p) {
     <div id="lis"></div>
     <div class="row" style="margin-top:10px"><button class="btn alt" id="whole">Hear the tune</button><button class="btn ghost" id="restart">Start over</button>
       ${timed ? '<label class="row" style="gap:6px;font-size:15px"><input type="checkbox" id="guide" style="width:22px;height:22px"> Play the melody with me (use headphones)</label>' : '<label class="row" style="gap:6px;font-size:15px"><input type="checkbox" id="auto" checked style="width:22px;height:22px"> Play each note first</label>'}</div>
-    <p class="sub" style="margin-top:8px">Starts on <b>${DSP.name(seq[0])}</b> · ${mel.bpm} BPM · ${orig ? 'original key, as you typed it' : 'moved to fit your range'}</p>
-    ${mine ? `<div class="chips"><button data-k="1" aria-pressed="${orig}">Original key</button><button data-k="0" aria-pressed="${!orig}">Fit my range</button></div>` : ''}
+    <div class="card" style="margin-top:12px"><h3>Key</h3>
+      ${mine ? `<div class="chips"><button data-k="0" aria-pressed="${!orig}">Fit my range</button><button data-k="1" aria-pressed="${orig}">As I typed it</button></div>` : ''}
+      <div class="row" style="justify-content:center;gap:8px"><button class="btn alt" data-sh="-12" aria-label="Down an octave">−8va</button><button class="btn alt" data-sh="-1" aria-label="Down one step">−1</button>
+        <div style="text-align:center;min-width:96px"><b style="font-size:22px">${DSP.name(seq[0])}</b><div class="sub" style="margin:0">first note${shift ? ` · ${shift > 0 ? '+' : ''}${shift}` : ''}</div></div>
+        <button class="btn alt" data-sh="1" aria-label="Up one step">+1</button><button class="btn alt" data-sh="12" aria-label="Up an octave">+8va</button></div>
+      <p class="sub" style="margin:10px 0 0;text-align:center">Lowest <b>${DSP.name(Math.min(...seq))}</b> · highest <b>${DSP.name(Math.max(...seq))}</b> · your range ${DSP.name(rng.lo)}–${DSP.name(rng.hi)}${rng.guess ? ' (guessed — measure it under My range)' : ''}</p>
+      ${outLo || outHi ? `<p style="margin:6px 0 0;text-align:center" class="c-high"><b>${outLo + outHi} note${outLo + outHi > 1 ? 's' : ''} outside your range</b> — ${outHi ? 'try −1' : 'try +1'}${Math.max(...seq) - Math.min(...seq) > rng.hi - rng.lo ? ' (this song is wider than your range, so a few will stay out)' : ''}</p>` : `<p style="margin:6px 0 0;text-align:center" class="c-ok"><b>Every note fits your range ✓</b></p>`}
+      ${mine && (shift || !orig) ? '<div class="row" style="justify-content:center;margin-top:8px"><button class="btn ghost" id="skeep">Save this key in the song</button></div>' : ''}
+      ${shift ? '<div class="row" style="justify-content:center;margin-top:6px"><button class="btn ghost" id="sreset">Reset key</button></div>' : ''}</div>
+    <p class="sub" style="margin-top:8px">${mel.bpm} BPM</p>
     ${mine ? `<div class="row"><button class="btn ghost" id="sedit">Edit this song</button><button class="btn ghost" id="sdel">Delete</button></div><div id="sdc"></div>` : ''}`;
   $$('[data-mel]', el).forEach((b) => (b.onclick = () => go({ v: 'sing', mode: 'song', mel: b.dataset.mel })));
   $$('[data-t]', el).forEach((b) => (b.onclick = () => { singSong.timed = b.dataset.t === '1'; go({ v: 'sing', mode: 'song', mel: key }); }));
   $$('[data-sp]', el).forEach((b) => (b.onclick = () => { singSong.speed = +b.dataset.sp; go({ v: 'sing', mode: 'song', mel: key }); }));
   $('[data-new]', el).onclick = () => go({ v: 'sing', mode: 'song', edit: '' });
   $$('[data-k]', el).forEach((b) => (b.onclick = () => { singSong.orig = b.dataset.k === '1'; go({ v: 'sing', mode: 'song', mel: key }); }));
+  $$('[data-sh]', el).forEach((b) => (b.onclick = () => { SH[key] = shift + +b.dataset.sh; go({ v: 'sing', mode: 'song', mel: key }); setTimeout(() => Audio.tone(getMel(key) && seq[0] + +b.dataset.sh, 0.6), 50); }));
+  if ($('#sreset')) $('#sreset').onclick = () => { SH[key] = 0; go({ v: 'sing', mode: 'song', mel: key }); };
+  if ($('#skeep')) $('#skeep').onclick = () => { mel.own.base = base; SH[key] = 0; singSong.orig = true; save(); toast('Key saved in the song'); go({ v: 'sing', mode: 'song', mel: key }); };
   if (mine) {
     $('#sedit').onclick = () => go({ v: 'sing', mode: 'song', edit: mel.own.id });
     $('#sdel').onclick = () => { $('#sdc').innerHTML = `<p style="margin:10px 0 6px">Delete “${esc(mel.name)}”?</p><div class="row"><button class="btn" id="sdy">Delete</button><button class="btn alt" id="sdn">Keep it</button></div>`; $('#sdy').onclick = () => { S.songs = S.songs.filter((x) => x !== mel.own); save(); singSong.key = 'five'; go({ v: 'sing', mode: 'song', mel: 'five' }); }; $('#sdn').onclick = () => ($('#sdc').innerHTML = ''); };
