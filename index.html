@@ -22,7 +22,7 @@ LAYOUT: one calm column (max 760px), bottom tab bar on phones, big 48px targets,
 --spruce:light-dark(#f3ddb0,#e6c88e);--fret:light-dark(#cfc8c0,#b9aea6);
 --ok:light-dark(#0b8a7a,#3ccbb4);--okbg:light-dark(#e2f4f1,#123a34);
 --low:light-dark(#2a62d4,#7aa4ff);--high:light-dark(#d4531c,#ff8d58);--warnbg:light-dark(#fff0e7,#3d2418);
---tabon:light-dark(#5b2a1e,#e6c88e);--r:16px}
+--tabon:light-dark(#5b2a1e,#e6c88e);--voc:light-dark(#3d4f9c,#9fb0f2);--vocbg:light-dark(#eceffa,#1f2440);--gtrbg:light-dark(#f6ece6,#2b1d18);--r:16px}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 html{scroll-padding-top:72px;-webkit-text-size-adjust:100%}
@@ -40,7 +40,7 @@ header.top .wrap{display:flex;align-items:center;gap:10px;min-height:58px}
 .iconbtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none;text-decoration:none;font-size:22px}
 .iconbtn svg{width:24px;height:24px}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--bg);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-nav.tabs .wrap{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:0}
+nav.tabs .wrap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:0}
 nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 2px 8px;font-size:12.5px;color:var(--muted);text-decoration:none;min-height:60px}
 nav.tabs a[aria-current=page]{color:var(--tabon);font-weight:700}
 nav.tabs svg{width:26px;height:26px}
@@ -213,11 +213,25 @@ textarea.field{resize:vertical;line-height:1.5}
 .help ul{margin:6px 0 0;padding-left:20px;font-size:15.5px}.help li{margin-bottom:4px}
 .field.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:16px}
 
+.sect{border-radius:20px;padding:14px 14px 6px;margin:0 0 14px}
+.sect.guitar{background:var(--gtrbg)}.sect.voice{background:var(--vocbg)}
+.sect-t{display:flex;align-items:center;gap:10px}.sect-t svg{width:30px;height:30px;flex:none}
+.sect.guitar .sect-t{color:var(--wood)}.sect.voice .sect-t{color:var(--voc)}
+:root[data-theme=dark] .sect.guitar .sect-t{color:var(--spruce)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .sect.guitar .sect-t{color:var(--spruce)}}
+.sect h1{margin:0;color:inherit}
+.sect .chips{margin-top:10px}
+.sect.guitar .chips button[aria-pressed=true]{background:var(--wood);border-color:var(--wood);color:#fff}
+.sect.voice .chips button[aria-pressed=true]{background:var(--voc);border-color:var(--voc);color:#fff}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:99px;margin-right:4px;vertical-align:1px}
+.tag.g{background:var(--gtrbg);color:var(--wood)}.tag.v{background:var(--vocbg);color:var(--voc)}.tag.b{background:var(--panel2);color:var(--ink)}
+.today .tag.g{background:rgba(255,255,255,.16);color:#fff7f0}.today .tag.v{background:#dfe5ff;color:#2c3a7a}.today .tag.b{background:rgba(255,255,255,.3);color:#fff}
+.fret.t-v .num{border-color:var(--voc)}.fret.t-g .num{border-color:var(--wood)}
+
 </style></head><body>
 <header class="top"><div class="wrap">
   <a class="brand" href="#learn"><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c7 0 12 3 12 8 0 8-7 16-12 18C11 27 4 19 4 11c0-5 5-8 12-8z" fill="var(--wood)"/><path d="M11 12h10M11 16h10M11 20h8" stroke="var(--spruce)" stroke-width="2" stroke-linecap="round"/></svg>Strum &amp; Sing</a>
   <span id="micchip" class="chip-mic">Mic off</span>
-  <a class="iconbtn" id="progbtn" href="#progress" aria-label="Progress and settings"></a>
 </div></header>
 <main id="view"></main>
 <nav class="tabs" aria-label="Main"><div class="wrap" id="tabs"></div></nav>
@@ -275,6 +289,64 @@ const DSP = (() => {
       if (Math.abs(den) > 1e-12) bt = tau + (s0 - s2) / (2 * den);
     }
     return { f0: sr / bt, clarity: 1 - c[tau] };
+  }
+
+  /* CMNDF-only YIN inside a narrow window around an expected pitch.
+     Stops sympathetic strings and strong overtones from pulling the reading an octave off. */
+  function pitchNear(buf, sr, f, cents = 350) {
+    const tLo = Math.max(2, Math.floor(sr / (f * Math.pow(2, cents / 1200)))), tHi = Math.ceil(sr / (f * Math.pow(2, -cents / 1200)));
+    const N = buf.length; if (N < 2 * tHi + 2) return { f0: 0, clarity: 0 };
+    const W = N - tHi - 1;
+    if (dBuf.length < tHi + 2) { dBuf = new Float32Array(tHi + 2); cBuf = new Float32Array(tHi + 2); }
+    const d = dBuf, c = cBuf; c[0] = 1; let run = 0;
+    for (let t = 1; t <= tHi + 1; t++) { let s = 0; for (let j = 0; j < W; j++) { const x = buf[j] - buf[j + t]; s += x * x; } d[t] = s; run += s; c[t] = run > 0 ? s * t / run : 1; }
+    let best = tLo; for (let t = tLo; t <= tHi; t++) if (c[t] < c[best]) best = t;
+    let bt = best;
+    if (best > tLo && best < tHi + 1) { const s0 = c[best - 1], s1 = c[best], s2 = c[best + 1], den = s0 + s2 - 2 * s1; if (Math.abs(den) > 1e-12) bt = best + (s0 - s2) / (2 * den); }
+    return { f0: sr / bt, clarity: 1 - c[best] };
+  }
+  /* Which of these notes is sounding? Harmonic sum over the spectrum: each candidate
+     collects energy at its fundamental and first overtones, so a ringing low string
+     can't out-vote the string you actually plucked. */
+  function noteScores(buf, sr, midis) {
+    const { mag, N } = fftMag(buf);
+    let mx = 1e-12; const k0 = Math.floor(60 * N / sr), k1 = Math.min(mag.length - 1, Math.ceil(2500 * N / sr));
+    for (let k = k0; k <= k1; k++) if (mag[k] > mx) mx = mag[k];
+    const W = [1, 0.85, 0.65, 0.45, 0.3, 0.2];
+    return midis.map((m) => { const f = m2f(m); let s = 0; for (let h = 1; h <= 6; h++) s += W[h - 1] * bandPeak(mag, N, sr, h * f, 45) / mx; return { m, s, a1: bandPeak(mag, N, sr, f, 45) / mx }; });
+  }
+  /* Tuner reading: pick the string (or use the chosen one), then measure precisely near it */
+  function stringPitch(buf, sr, strings, fixed = -1) {
+    let idx = fixed;
+    if (idx < 0) { const sc = noteScores(buf, sr, strings); idx = sc.reduce((b, x, i) => (x.s > sc[b].s ? i : b), 0); if (sc[idx].s < 0.6) return { f0: 0, clarity: 0, idx }; }
+    const r = pitchNear(buf, sr, m2f(strings[idx]), fixed < 0 ? 300 : 550);
+    return { ...r, idx };
+  }
+
+  /* Live tuner: string-aware reading + ignores the fading tail (where other strings ring along)
+     + only switches string on a fresh pluck */
+  function makeTuner(strings = OPEN) {
+    let peak = 0, lock = -1, prevR = 0, pend = -1, pendN = 0; const sm = makeSmoother(5);
+    return {
+      read(buf, sr, fixed = -1) {
+        const r = rms(buf); const onset = r > prevR * 1.6 && r > 0.01; prevR = r;
+        peak = Math.max(r, peak * 0.985);
+        if (r < Math.max(0.004, peak * 0.18)) { sm.push(0); return { f0: 0, r, why: 'fading' }; }
+        let idx = fixed;
+        if (idx < 0) {
+          const sc = noteScores(buf, sr, strings); const top = sc.reduce((b, x, i) => (x.s > sc[b].s ? i : b), 0);
+          if (sc[top].s < 0.6) return { f0: 0, r };
+          if (lock < 0 || onset || top === lock) { lock = top; pend = -1; }
+          else if (top === pend) { if (++pendN >= 4) { lock = top; pend = -1; } } else { pend = top; pendN = 1; }
+          if (lock !== top && sc[lock].s < sc[top].s * 0.35) lock = top;
+          idx = lock;
+        }
+        const y = pitchNear(buf, sr, m2f(strings[idx]), fixed < 0 ? 300 : 550);
+        if (y.clarity < 0.6) { sm.push(0); return { f0: 0, r, idx }; }
+        return { f0: sm.push(y.f0), r, idx, clarity: y.clarity };
+      },
+      reset() { peak = 0; lock = -1; sm.reset(); }
+    };
   }
 
   /* Smoother: median of recent readings (in cents) with jump rejection */
@@ -469,7 +541,7 @@ const DSP = (() => {
     return out;
   }
 
-  return { NAMES, state, f2m, m2f, pc, name, pcName, rms, yin, makeSmoother, fftMag, chroma, peaks, explain, checkChord, track, OPEN, notesOf };
+  return { NAMES, state, f2m, m2f, pc, name, pcName, rms, yin, pitchNear, noteScores, stringPitch, makeTuner, bandPeak, makeSmoother, fftMag, chroma, peaks, explain, checkChord, track, OPEN, notesOf };
 })();
 
 
@@ -820,8 +892,10 @@ let preset = null;
 function go(p) { preset = p; const h = p.v === 'lesson' ? 'lesson-' + p.id : p.v; if (location.hash.slice(1) === h) route(); else location.hash = h; }
 function route() {
   leaveFns.forEach((f) => { try { f(); } catch (e) { /* */ } }); leaveFns = [];
-  const h = location.hash.slice(1) || 'learn';
-  const tab = h.startsWith('lesson-') ? 'learn' : h;
+  let h = location.hash.slice(1) || 'learn';
+  if (h === 'guitar') h = route.lastG || 'tune'; if (h === 'voice') h = 'sing';
+  if (['tune', 'chords', 'rhythm'].includes(h)) route.lastG = h;
+  const tab = h.startsWith('lesson-') ? 'learn' : ['tune', 'chords', 'rhythm'].includes(h) ? 'guitar' : h === 'sing' ? 'voice' : h;
   $$('nav.tabs a').forEach((a) => { if (a.dataset.v === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   const p = preset || {}; preset = null;
   if (!p.fromPlan) planCtx = null;
@@ -848,9 +922,9 @@ const learnedChords = () => { const set = new Set(); LESSONS.forEach((l) => { if
 function todayPlan() {
   const d = dayKey(); if (S.plan.date !== d) { S.plan = { date: d, ticks: {} }; }
   const cur = LESSONS.find((l) => !S.done[l.id]) || LESSONS[LESSONS.length - 1];
-  const items = [{ id: 'warm', l: 'Warm up: voice siren', m: 2, go: { v: 'sing', mode: 'free' } }];
-  if (S.done.guitar) items.push({ id: 'tune', l: 'Tune your guitar', m: 1, go: { v: 'tune' } });
-  items.push({ id: 'lesson', l: 'Lesson: ' + cur.t, m: cur.min, go: { v: 'lesson', id: cur.id } });
+  const items = [{ id: 'warm', t: 'v', l: 'Warm up: voice siren', m: 2, go: { v: 'sing', mode: 'free' } }];
+  if (S.done.guitar) items.push({ id: 'tune', t: 'g', l: 'Tune your guitar', m: 1, go: { v: 'tune' } });
+  items.push({ id: 'lesson', t: TRACK[cur.id], l: 'Lesson: ' + cur.t, m: cur.min, go: { v: 'lesson', id: cur.id } });
   const lc = learnedChords();
   if (lc.length >= 2) {
     let best = null;
@@ -858,12 +932,14 @@ function todayPlan() {
       const k = lc[i] + '-' + lc[j], h = S.omc[k] || []; const top = h.length ? Math.max(...h.map((x) => x.n)) : -1;
       if (!best || top < best.top) best = { a: lc[i], b: lc[j], top };
     }
-    items.push({ id: 'omc', l: `One-minute change: ${best.a}–${best.b}`, m: 2, go: { v: 'chords', chord: best.a, omc: [best.a, best.b] } });
-  } else if (S.done.match) items.push({ id: 'rev', l: 'Match 5 notes', m: 3, go: { v: 'sing', mode: 'match' } });
-  items.push({ id: 'ear', l: 'Ear game', m: 2, go: { v: 'sing', mode: 'ear', ear: S.done.ear ? 'iv' : 'hl' } });
+    items.push({ id: 'omc', t: 'g', l: `One-minute change: ${best.a}–${best.b}`, m: 2, go: { v: 'chords', chord: best.a, omc: [best.a, best.b] } });
+  } else if (S.done.match) items.push({ id: 'rev', t: 'v', l: 'Match 5 notes', m: 3, go: { v: 'sing', mode: 'match' } });
+  items.push({ id: 'ear', t: 'v', l: 'Ear game', m: 2, go: { v: 'sing', mode: 'ear', ear: S.done.ear ? 'iv' : 'hl' } });
   return items;
 }
 function weekMinutes() { let s = 0; const d = new Date(); for (let i = 0; i < 7; i++) { const k = dayKey(d); s += (S.days[k] && S.days[k].s) || 0; d.setDate(d.getDate() - 1); } return Math.round(s / 60); }
+const TRACK = { pitch: 'v', range: 'v', guitar: 'g', tune: 'g', breath: 'v', match: 'v', chordbox: 'g', em: 'g', ad: 'g', omc: 'g', beat: 'g', pattern: 'g', scale: 'v', ear: 'v', melody: 'v', gcam: 'g', root: 'b', song: 'b' };
+const tag = (t) => `<span class="tag ${t}">${t === 'g' ? 'Guitar' : t === 'v' ? 'Voice' : 'Both'}</span>`;
 function renderLearn() {
   const plan = todayPlan(), done = LESSONS.filter((l) => S.done[l.id]).length;
   const cur = LESSONS.find((l) => !S.done[l.id]);
@@ -874,19 +950,21 @@ function renderLearn() {
     <p class="sub">About ${total} minutes. Fingers sore? Split it into two short sessions.</p>
     <ol class="plan">${plan.map((it) => `<li class="${S.plan.ticks[it.id] ? 'done' : ''}" data-id="${it.id}">
       <button class="tick" aria-label="Mark done">${S.plan.ticks[it.id] ? ICON.check : ''}</button>
-      <span class="lbl">${esc(it.l)}<small>${it.m} min</small></span>
+      <span class="lbl">${esc(it.l)}<small>${tag(it.t)} ${it.m} min</small></span>
       <button class="go" data-go="${it.id}">Go</button></li>`).join('')}</ol>
     <div class="streak"><span><b>${streak()}</b>day streak</span><span><b>${weekMinutes()}</b>min this week</span><span><b>${done}/${LESSONS.length}</b>lessons</span></div>
   </div></section>
   <div class="wrap band">
     <h2>Your path</h2>
     <p class="sub">Five short units. Each fret is a lesson — about a week per unit if you practise most days.</p>
-    <div class="path">${UNITS.map((u, ui) => `<div class="unit"><h3>Unit ${ui + 1} · ${esc(u)}</h3>
-      ${LESSONS.map((l, i) => l.u !== ui ? '' : `<a class="fret ${S.done[l.id] ? 'done' : ''} ${cur === l ? 'now' : ''}" href="#lesson-${l.id}">
-        <span class="num">${S.done[l.id] ? ICON.check : i + 1}</span><span class="t">${esc(l.t)}<small>${l.min} min${cur === l ? ' · up next' : ''}</small></span></a>`).join('')}
-    </div>`).join('')}</div>
+    <div class="chips" role="group" aria-label="Show lessons for">${[['all', 'Everything'], ['g', 'Guitar'], ['v', 'Voice']].map(([k, l]) => `<button data-f="${k}" aria-pressed="${(renderLearn.f || 'all') === k}">${l}</button>`).join('')}</div>
+    <div class="path">${UNITS.map((u, ui) => { const ls = LESSONS.filter((l) => l.u === ui && (!renderLearn.f || renderLearn.f === 'all' || TRACK[l.id] === renderLearn.f || TRACK[l.id] === 'b')); return ls.length ? `<div class="unit"><h3>Unit ${ui + 1} · ${esc(u)}</h3>
+      ${ls.map((l) => { const i = LESSONS.indexOf(l); return `<a class="fret t-${TRACK[l.id]} ${S.done[l.id] ? 'done' : ''} ${cur === l ? 'now' : ''}" href="#lesson-${l.id}">
+        <span class="num">${S.done[l.id] ? ICON.check : i + 1}</span><span class="t">${esc(l.t)}<small>${tag(TRACK[l.id])} ${l.min} min${cur === l ? ' · up next' : ''}</small></span></a>`; }).join('')}
+    </div>` : ''; }).join('')}</div>
     <p class="sub" style="margin-top:14px">No sound? Turn the <b>volume up</b>, flip the <b>silent switch</b> off, and tap a button once more.</p>
   </div>`;
+  $$('[data-f]').forEach((b) => (b.onclick = () => { renderLearn.f = b.dataset.f; renderLearn(); }));
   $$('.plan li').forEach((li) => {
     const it = plan.find((x) => x.id === li.dataset.id);
     $('.tick', li).onclick = () => { S.plan.ticks[it.id] = S.plan.ticks[it.id] ? 0 : 1; save(); renderLearn(); };
@@ -900,7 +978,7 @@ function renderLesson(id) {
   const L = LESSONS[i], next = LESSONS[i + 1];
   view.innerHTML = `<div class="wrap lesson">
     <a class="btn ghost back" href="#learn">← Your path</a>
-    <p class="sub" style="margin:8px 0 2px">Unit ${L.u + 1} · ${esc(UNITS[L.u])} · ${L.min} min</p>
+    <p class="sub" style="margin:8px 0 2px">${tag(TRACK[L.id])} Unit ${L.u + 1} · ${esc(UNITS[L.u])} · ${L.min} min</p>
     <h1>${esc(L.t)}</h1>
     <div class="row" style="margin:10px 0"><button class="btn alt" id="readit">Read it to me</button></div>
     <div id="art"></div>
@@ -1110,12 +1188,22 @@ function Trace(canvas) {
 }
 const centsTxt = (c) => (c > 0 ? '+' : c < 0 ? '−' : '') + Math.abs(Math.round(c)) + ' cents';
 
+/* ---------- Guitar / Voice section header: coloured band + its tools ---------- */
+function head(kind, cur) {
+  const G = [['tune', 'Tuner'], ['chords', 'Chords'], ['rhythm', 'Strumming']];
+  const V = [['match', 'Match a note'], ['song', 'Songs'], ['free', 'Siren'], ['range', 'My range'], ['ear', 'Ear game']];
+  const list = kind === 'guitar' ? G : V;
+  setTimeout(() => $$('.sect [data-go]').forEach((b) => (b.onclick = () => (kind === 'guitar' ? go({ v: b.dataset.go }) : go({ v: 'sing', mode: b.dataset.go })))), 0);
+  return `<div class="sect ${kind}"><div class="sect-t">${kind === 'guitar' ? ICON.chords : ICON.sing}<h1>${kind === 'guitar' ? 'Guitar' : 'Voice'}</h1></div>
+    <div class="chips" role="group" aria-label="${kind} tools">${list.map(([k, l]) => `<button data-go="${k}" aria-pressed="${k === cur}">${l}</button>`).join('')}</div></div>`;
+}
+
 /* ================= TUNER ================= */
 function renderTune(p) {
   const ticks = []; for (let c = -50; c <= 50; c += 5) { const a = (c * 1.6 - 90) * Math.PI / 180, r1 = c % 25 === 0 ? 160 : 170; ticks.push(`<line x1="${200 + r1 * Math.cos(a)}" y1="${210 + r1 * Math.sin(a)}" x2="${200 + 182 * Math.cos(a)}" y2="${210 + 182 * Math.sin(a)}" stroke="currentColor" stroke-width="${c % 25 === 0 ? 3 : 1.5}" opacity="${c % 25 === 0 ? .8 : .45}"/>`); }
   const arc = (c0, c1, r) => { const a0 = (c0 * 1.6 - 90) * Math.PI / 180, a1 = (c1 * 1.6 - 90) * Math.PI / 180; return `M${200 + r * Math.cos(a0)},${210 + r * Math.sin(a0)} A${r},${r} 0 0 1 ${200 + r * Math.cos(a1)},${210 + r * Math.sin(a1)}`; };
   view.innerHTML = `<div class="wrap band">
-    <h1>Tuner</h1><p class="sub">Pluck <b>one string</b> and let it ring. Tune <b>up</b> to the note.</p>
+    ${head('guitar', 'tune')}<p class="sub">Pluck <b>one string</b> and let it ring. Tune <b>up</b> to the note.</p>
     <div class="tuner"><svg viewBox="0 0 400 225" role="img" aria-label="Tuning needle">
       <path d="${arc(-50, 50, 188)}" fill="none" stroke="var(--panel2)" stroke-width="18" stroke-linecap="round"/>
       <path d="${arc(-50, -5, 188)}" fill="none" stroke="var(--low)" stroke-width="6" opacity=".55"/>
@@ -1146,11 +1234,12 @@ function renderTune(p) {
   };
   $$('#strs button').forEach((b) => (b.onclick = () => { sel = +b.dataset.s; $$('#strs button').forEach((x) => x.setAttribute('aria-pressed', x === b)); if (sel >= 0) Audio.pluck(DSP.OPEN[sel], 0, 0.7); }));
   $('#ref').onclick = () => Audio.pluck(DSP.OPEN[sel >= 0 ? sel : last], 0, 0.7);
-  const pr = PitchReader({ n: 2048, fmin: 60, fmax: 1000, smooth: 7 });
+  const TU = DSP.makeTuner();
   const L = listenUI($('#lis'), {
     onStart() {
+      TU.reset();
       loop(() => {
-        const r = pr.read(); if (!r || !r.f0) return;
+        const fr = Audio.micFrame(4096); if (!fr) return; const r = TU.read(fr.x, fr.sr, sel); if (!r.f0) return;
         activity('guitar');
         const { tgt, c } = show(DSP.f2m(r.f0));
         if (Math.abs(c) <= 5) { if (++streakOk === 14 && !good.has(tgt)) { good.add(tgt); $(`#strs [data-s="${tgt}"]`).classList.add('good'); toast(`String ${6 - tgt} (${STRING_NAMES[tgt]}) is in tune`); } } else streakOk = 0;
@@ -1159,7 +1248,9 @@ function renderTune(p) {
     onStop: stopLoop,
     fileHint: 'Pluck <b>one</b> string and let it ring for 3 seconds.',
     onFile(a) {
-      const tr = DSP.track(a.x, a.sr, { fmin: 60, fmax: 1000 }).filter((f) => f.f0).map((f) => DSP.f2m(f.f0)).sort((x, y) => x - y);
+      const ds = a.sr > 30000 ? 2 : 1, rate = a.sr / ds, T2 = DSP.makeTuner(), tr = [];
+      for (let i = 0; i + 4096 * ds < a.x.length; i += Math.round(0.03 * a.sr)) { const fr = new Float32Array(4096); for (let j = 0; j < 4096; j++) fr[j] = ds === 2 ? 0.5 * (a.x[i + 2 * j] + a.x[i + 2 * j + 1]) : a.x[i + j]; const r = T2.read(fr, rate, sel); if (r.f0) tr.push(DSP.f2m(r.f0)); }
+      tr.sort((x, y) => x - y);
       if (tr.length < 5) return toast('I couldn’t hear a clear note. Try again closer to the guitar.');
       const mid = tr.slice(Math.floor(tr.length * 0.2), Math.ceil(tr.length * 0.8)); show(mid[mid.length >> 1], 'from your recording');
     }
@@ -1179,12 +1270,11 @@ function chime() { Audio.tone(84, 0.12, 0, 0.18); Audio.tone(88, 0.18, 0.11, 0.1
 function renderSing(p) {
   const mode = p.mode || renderSing.mode || 'match'; renderSing.mode = mode;
   const modes = [['match', 'Match a note'], ['song', 'Steps & songs'], ['free', 'Free / siren'], ['range', 'My range'], ['ear', 'Ear game']];
-  view.innerHTML = `<div class="wrap band"><h1>Sing</h1>
-    <div class="chips" role="group" aria-label="Singing modes">${modes.map(([k, l]) => `<button data-m="${k}" aria-pressed="${k === mode}">${l}</button>`).join('')}</div>
+  view.innerHTML = `<div class="wrap band">${head('voice', mode)}
     ${!S.range && !S.set.voice && mode !== 'range' && mode !== 'ear' ? `<div class="card" id="vq"><h3>Which is closer to your voice?</h3><p class="sub">So I pick notes you can reach. You can measure it exactly later.</p>
       <div class="row"><button class="btn alt" data-voice="low">Lower voice</button><button class="btn alt" data-voice="high">Higher voice</button><button class="btn ghost" data-voice="measure">Measure it</button></div></div>` : ''}
     <div id="mode"></div></div>`;
-  $$('.chips [data-m]').forEach((b) => (b.onclick = () => go({ v: 'sing', mode: b.dataset.m })));
+
   $$('[data-voice]').forEach((b) => (b.onclick = () => { if (b.dataset.voice === 'measure') return go({ v: 'sing', mode: 'range' }); S.set.voice = b.dataset.voice; save(); go({ v: 'sing', mode }); }));
   ({ match: singMatch, song: singSong, free: singFree, range: singRangeMode, ear: earGame })[mode]($('#mode'), p);
 }
@@ -1664,7 +1754,7 @@ function spark(vals) { if (vals.length < 2) return ''; const mx = Math.max(...va
 function renderChords(p) {
   const learned = learnedChords();
   let cur = p.chord || renderChords.cur || learned[0] || 'Em'; renderChords.cur = cur;
-  view.innerHTML = `<div class="wrap band"><h1>Chords</h1>
+  view.innerHTML = `<div class="wrap band">${head('guitar', 'chords')}
     <div class="chips">${CHORD_ORDER.map((c) => `<button data-c="${c}" aria-pressed="${c === cur}">${c}${learned.includes(c) ? '<span class="dot" aria-label="learned"></span>' : ''}</button>`).join('')}</div>
     <div class="chordwrap"><div class="cbox" id="cbox">${chordSVG(cur)}</div>
     <div><div class="cname">${cur}</div><p style="margin-top:8px">${CHORDS[cur].tip}</p>
@@ -1758,18 +1848,29 @@ function renderChords(p) {
       }
     }, 20);
   };
+  /* which note is this string making? choose among: right note, a fret too high/low, open string; then measure it */
+  let pPeak = 0;
+  const perfRead = (i, want) => {
+    const fr = Audio.micFrame(4096); if (!fr) return 0;
+    const r = DSP.rms(fr.x); pPeak = Math.max(r, pPeak * 0.985); if (r < Math.max(0.004, pPeak * 0.18)) return 0;
+    const cands = [want, want - 2, want - 1, want + 1, want + 2]; if (shape[i] > 2) cands.push(DSP.OPEN[i]);
+    const sc = DSP.noteScores(fr.x, fr.sr, cands); const best = sc.reduce((b, x) => (x.s > b.s ? x : b));
+    if (best.s < 0.5) return 0;
+    const y = DSP.pitchNear(fr.x, fr.sr, DSP.m2f(best.m), 60); return y.clarity > 0.6 ? DSP.f2m(y.f0) : 0;
+  };
   $('#cperf').onclick = async () => {
     if (!(await needMic('perf'))) return;
     K = { k: 0, status: order.reduce((o, i) => ((o[i] = 'wait'), o), []), msg: {}, phase: 'cool', since: performance.now(), stable: [], hist: [], last: null };
-    pr.reset(); perfPrompt();
+    pr.reset(); pPeak = 0; perfPrompt();
     loop(() => {
       if (mode !== 'perf' || K.k >= order.length) return;
       const fr = Audio.micFrame(1024, false); const r = fr ? DSP.rms(fr.x) : 0; K.hist.push(r); if (K.hist.length > 6) K.hist.shift();
       const now = performance.now();
       if (K.phase === 'cool') { if (now - K.since > 300) { K.phase = 'arm'; K.stable = []; } return; }
-      const rd = pr.read(); const m = rd && rd.f0 ? DSP.f2m(rd.f0) : 0;
+      const i = order[K.k], want = DSP.OPEN[i] + shape[i];
+      const m = perfRead(i, want);
       if (m) { if (K.stable.length && Math.abs(m - K.stable[K.stable.length - 1]) > 0.4) K.stable = []; K.stable.push(m); } else K.stable = [];
-      const i = order[K.k], want = DSP.OPEN[i] + shape[i], top = K.stable[K.stable.length - 1];
+      const top = K.stable[K.stable.length - 1];
       const fresh = (x) => K.last == null || Math.abs(x - K.last) > 0.5 || Math.abs(x - want) < 0.5; // not just the last string still ringing
       if (K.phase === 'arm') {
         if (r > 0.01 && r > Math.min(...K.hist) * 1.6) { K.phase = 'hear'; K.t0 = now; K.stable = []; pr.reset(); return; }
@@ -1823,7 +1924,7 @@ function renderChords(p) {
 function renderRhythm(p) {
   const R = renderRhythm.R || (renderRhythm.R = { bpm: 60, pat: 'faithful', prog: 'none', hear: false });
   if (p.bpm) R.bpm = p.bpm; if (p.pat) R.pat = p.pat; if (p.prog) R.prog = p.prog;
-  view.innerHTML = `<div class="wrap band"><h1>Rhythm</h1>
+  view.innerHTML = `<div class="wrap band">${head('guitar', 'rhythm')}
     <div class="nowchord" id="nowc"></div>
     <div class="beats" id="beats"></div>
     <div class="bpm"><button class="iconbtn" id="bm" aria-label="Slower">−</button><div class="v" id="bv">${R.bpm}</div><button class="iconbtn" id="bp" aria-label="Faster">+</button></div>
@@ -1909,8 +2010,7 @@ function renderProgress() {
 }
 
 /* ================= boot ================= */
-$('#tabs').innerHTML = [['learn', 'Learn'], ['tune', 'Tune'], ['sing', 'Sing'], ['chords', 'Chords'], ['rhythm', 'Rhythm']].map(([v, l]) => `<a href="#${v}" data-v="${v}">${ICON[v]}<span>${l}</span></a>`).join('');
-$('#progbtn').innerHTML = ICON.progress;
+$('#tabs').innerHTML = [['learn', 'Learn', 'learn'], ['guitar', 'Guitar', 'chords'], ['voice', 'Voice', 'sing'], ['progress', 'Progress', 'progress']].map(([v, l, ic]) => `<a href="#${v}" data-v="${v}">${ICON[ic]}<span>${l}</span></a>`).join('');
 window.addEventListener('hashchange', route);
 document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
 route(); micChip(); initRemote();
