@@ -1201,21 +1201,39 @@ const octaveFold = (d) => ((((d + 600) % 1200) + 1200) % 1200) - 600;
 
 function singMatch(el, p) {
   const tol = S.set.tol, drone = !!p.drone;
-  el.innerHTML = `<div class="card"><div class="row" style="justify-content:space-between"><div><span class="sub">${drone ? 'Hum the home note of' : 'Sing this note'}</span><div style="font-size:34px;font-weight:700;line-height:1.1" id="tgt">–</div></div>
+  const r = singRange(), Z = S.set.zone || (S.set.zone = { k: 'all', lo: null, hi: null });
+  const third = Math.max(2, Math.round((r.hi - r.lo) / 3));
+  const zoneOf = () => { const k = Z.k; if (k === 'low') return [r.lo, r.lo + third]; if (k === 'mid') return [r.lo + third, r.hi - third]; if (k === 'high') return [r.hi - third, r.hi]; if (k === 'custom') return [Z.lo ?? r.lo, Z.hi ?? r.hi]; return [r.lo + 2, r.hi - 3]; };
+  el.innerHTML = `${drone ? '' : `<div class="card"><h3 style="margin-bottom:4px">Practise notes from</h3>
+    <div class="chips">${[['all', 'My whole range'], ['low', 'Low'], ['mid', 'Middle'], ['high', 'High'], ['custom', 'Pick my own']].map(([k, l]) => `<button data-z="${k}" aria-pressed="${Z.k === k}">${l}</button>`).join('')}</div>
+    ${Z.k === 'custom' ? `<div class="row" style="justify-content:center;gap:6px">
+      <span class="sub">from</span><button class="iconbtn" data-zc="lo,-1" aria-label="Lowest note down">−</button><b style="min-width:44px;text-align:center" id="zlo"></b><button class="iconbtn" data-zc="lo,1" aria-label="Lowest note up">+</button>
+      <span class="sub">to</span><button class="iconbtn" data-zc="hi,-1" aria-label="Highest note down">−</button><b style="min-width:44px;text-align:center" id="zhi"></b><button class="iconbtn" data-zc="hi,1" aria-label="Highest note up">+</button></div>` : ''}
+    <p class="sub" style="margin:8px 0 0;text-align:center" id="zinfo"></p></div>`}
+  <div class="card"><div class="row" style="justify-content:space-between"><div><span class="sub">${drone ? 'Hum the home note of' : 'Sing this note'}</span><div style="font-size:34px;font-weight:700;line-height:1.1" id="tgt">–</div></div>
     <div class="row"><button class="btn alt" id="again">Hear it again</button><button class="btn ghost" id="next">New note</button></div></div>
     <div class="hold" aria-hidden="true"><i id="hold"></i></div><p class="sub" style="margin:0" id="say">Press start, listen, then sing “oo”.</p></div>
     ${traceBlock()}<div style="margin-top:12px" id="lis"></div>
     <div class="stats"><div><b id="sN">0</b>notes</div><div><b id="sOk">0</b>matched</div><div><b id="sE">–</b>avg off</div></div>`;
   const tr = Trace($('canvas', el)), pr = PitchReader();
   const M = { t: null, chord: null, phase: 'idle', hold: 0, n: 0, ok: 0, errs: [], all: [] };
-  const r = singRange();
+  const zone = () => {
+    let [lo, hi] = zoneOf(); lo = clamp(Math.round(lo), 36, 84); hi = clamp(Math.round(hi), lo + 1, 86);
+    if ($('#zlo')) { $('#zlo').textContent = DSP.name(lo); $('#zhi').textContent = DSP.name(hi); }
+    if ($('#zinfo')) $('#zinfo').innerHTML = `Notes between <b>${DSP.name(lo)}</b> and <b>${DSP.name(hi)}</b>${lo < r.lo || hi > r.hi ? ' — <span class="c-high">goes past your easy range: stay gentle, no pushing</span>' : ''}`;
+    return [lo, hi];
+  };
+  $$('[data-z]', el).forEach((b) => (b.onclick = () => { Z.k = b.dataset.z; if (Z.k === 'custom' && Z.lo == null) { Z.lo = r.lo; Z.hi = r.hi; } save(); go({ v: 'sing', mode: 'match' }); }));
+  $$('[data-zc]', el).forEach((b) => (b.onclick = () => { const [w, d] = b.dataset.zc.split(','); Z[w] = clamp((Z[w] ?? r[w]) + +d, 36, 86); if (Z.hi <= Z.lo) { if (w === 'lo') Z.hi = Z.lo + 1; else Z.lo = Z.hi - 1; } save(); const [lo, hi] = zone(); Audio.tone(w === 'lo' ? lo : hi, 0.5); M.t = null; pick(); }));
   const pick = () => {
     if (drone) {
       const pool = learnedChords().filter((c) => !c.includes('7')); const list = pool.length ? pool : ['G', 'C', 'D', 'Em', 'A'];
       M.chord = list[Math.floor(Math.random() * list.length)]; const root = DSP.NAMES.findIndex((n) => n === M.chord.replace('m', '').replace('maj7', ''));
       let m = r.lo + 2 + ((root - (r.lo + 2)) % 12 + 12) % 12; M.t = m;
     } else {
-      const lo = r.lo + 2, hi = r.hi - 3; let m = M.t == null ? Math.round((lo + hi) / 2) : M.t + [-4, -3, -2, 2, 3, 4, 5][Math.floor(Math.random() * 7)];
+      const [lo, hi] = zone(), span = hi - lo, jumps = [-4, -3, -2, -1, 1, 2, 3, 4, 5].filter((j) => Math.abs(j) <= Math.max(1, span));
+      let m = M.t == null || M.t < lo || M.t > hi ? lo + Math.floor(Math.random() * (span + 1)) : M.t + jumps[Math.floor(Math.random() * jumps.length)];
+      if (m < lo || m > hi) m = M.t - (m - M.t); if (m < lo || m > hi || m === M.t) m = lo + Math.floor(Math.random() * (span + 1));
       M.t = clamp(m, lo, hi);
     }
     $('#tgt').textContent = drone ? `${M.chord} → ${DSP.name(M.t)}` : DSP.name(M.t);
