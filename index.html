@@ -1232,7 +1232,7 @@ function singMatch(el, p) {
       let m = r.lo + 2 + ((root - (r.lo + 2)) % 12 + 12) % 12; M.t = m;
     } else {
       const [lo, hi] = zone(), span = hi - lo, jumps = [-4, -3, -2, -1, 1, 2, 3, 4, 5].filter((j) => Math.abs(j) <= Math.max(1, span));
-      let m = M.t == null || M.t < lo || M.t > hi ? lo + Math.floor(Math.random() * (span + 1)) : M.t + jumps[Math.floor(Math.random() * jumps.length)];
+      let m = M.t == null || M.t < lo || M.t > hi ? Math.round((lo + hi) / 2) : M.t + jumps[Math.floor(Math.random() * jumps.length)];
       if (m < lo || m > hi) m = M.t - (m - M.t); if (m < lo || m > hi || m === M.t) m = lo + Math.floor(Math.random() * (span + 1));
       M.t = clamp(m, lo, hi);
     }
