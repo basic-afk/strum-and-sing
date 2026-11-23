@@ -313,12 +313,26 @@ const DSP = (() => {
     let mx = 1e-12; const k0 = Math.floor(60 * N / sr), k1 = Math.min(mag.length - 1, Math.ceil(2500 * N / sr));
     for (let k = k0; k <= k1; k++) if (mag[k] > mx) mx = mag[k];
     const W = [1, 0.85, 0.65, 0.45, 0.3, 0.2];
-    return midis.map((m) => { const f = m2f(m); let s = 0; for (let h = 1; h <= 6; h++) s += W[h - 1] * bandPeak(mag, N, sr, h * f, 45) / mx; return { m, s, a1: bandPeak(mag, N, sr, f, 45) / mx }; });
+    const sc = midis.map((m) => { const f = m2f(m), a = []; let s = 0;
+      for (let h = 1; h <= 6; h++) { a[h] = bandPeak(mag, N, sr, h * f, 45) / mx; s += W[h - 1] * a[h]; }
+      return { m, s, a1: a[1], a }; });
+    /* Ambiguity: high E is exactly 3× the A string (and 4× low E), so a ringing low string "contains" it.
+       The low string only really sounds if its OWN overtones (the ones the high string can't make) are there. */
+    let top = sc.reduce((b, x) => (x.s > b.s ? x : b), sc[0]);
+    for (const L of sc) for (const H of sc) {
+      if (H.m <= L.m) continue; const k = m2f(H.m) / m2f(L.m), kr = Math.round(k);
+      if (kr < 2 || kr > 4 || Math.abs(1200 * Math.log2(k / kr)) > 45) continue;
+      if (top !== L && top !== H) continue;
+      let uniq = 0; for (let h = 2; h <= 6; h++) if (h % kr && L.a[h] > 0.15) uniq++;
+      top = uniq >= 2 || L.a1 >= H.a1 ? L : H; // a really plucked string is loud at its own note, or rings its own overtones
+    }
+    sc.top = top;
+    return sc;
   }
   /* Tuner reading: pick the string (or use the chosen one), then measure precisely near it */
   function stringPitch(buf, sr, strings, fixed = -1) {
     let idx = fixed;
-    if (idx < 0) { const sc = noteScores(buf, sr, strings); idx = sc.reduce((b, x, i) => (x.s > sc[b].s ? i : b), 0); if (sc[idx].s < 0.6) return { f0: 0, clarity: 0, idx }; }
+    if (idx < 0) { const sc = noteScores(buf, sr, strings); idx = sc.indexOf(sc.top); if (sc[idx].s < 0.6) return { f0: 0, clarity: 0, idx }; }
     const r = pitchNear(buf, sr, m2f(strings[idx]), fixed < 0 ? 300 : 550);
     return { ...r, idx };
   }
@@ -334,7 +348,7 @@ const DSP = (() => {
         if (r < Math.max(0.004, peak * 0.18)) { sm.push(0); return { f0: 0, r, why: 'fading' }; }
         let idx = fixed;
         if (idx < 0) {
-          const sc = noteScores(buf, sr, strings); const top = sc.reduce((b, x, i) => (x.s > sc[b].s ? i : b), 0);
+          const sc = noteScores(buf, sr, strings); const top = sc.indexOf(sc.top);
           if (sc[top].s < 0.6) return { f0: 0, r };
           if (lock < 0 || onset || top === lock) { lock = top; pend = -1; }
           else if (top === pend) { if (++pendN >= 4) { lock = top; pend = -1; } } else { pend = top; pendN = 1; }
@@ -343,6 +357,8 @@ const DSP = (() => {
         }
         const y = pitchNear(buf, sr, m2f(strings[idx]), fixed < 0 ? 300 : 550);
         if (y.clarity < 0.6) { sm.push(0); return { f0: 0, r, idx }; }
+        // in auto mode a reading at the edge of the window means we picked the wrong string: wait for a better frame
+        if (fixed < 0 && Math.abs(f2m(y.f0) - strings[idx]) > 1.5) { lock = -1; sm.push(0); return { f0: 0, r, idx }; }
         return { f0: sm.push(y.f0), r, idx, clarity: y.clarity };
       },
       reset() { peak = 0; lock = -1; sm.reset(); }
@@ -1214,7 +1230,7 @@ function renderTune(p) {
       <g class="needle" id="needle"><line x1="200" y1="210" x2="200" y2="40" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/></g>
       <circle cx="200" cy="210" r="11" fill="var(--wood)"/></svg>
       <div class="readout"><div class="nn" id="tn">–</div><div class="sub" id="tc">Pick a string, or just play one</div><div class="hint" id="th" aria-live="polite"></div></div></div>
-    <div class="strings" id="strs"><button data-s="-1" aria-pressed="true">Auto<small>any</small></button>${STRING_NAMES.map((n, i) => `<button data-s="${i}">${n}<small>string ${6 - i}</small></button>`).join('')}</div>
+    <div class="strings" id="strs"><button data-s="-1" aria-pressed="true">Auto<small>any</small></button>${STRING_NAMES.map((n, i) => `<button data-s="${i}">${n}<small>${i === 0 ? 'low · 6' : i === 5 ? 'high · 1' : 'string ' + (6 - i)}</small></button>`).join('')}</div>
     <div id="lis"></div>
     <div class="row" style="margin-top:10px"><button class="btn alt" id="ref">Hear the string</button></div>
     <p class="sub" style="margin-top:14px">Needle jumping around? Hold the phone close to the sound hole and mute the other strings with your hand.</p></div>`;
@@ -1223,7 +1239,7 @@ function renderTune(p) {
     const tgt = sel >= 0 ? sel : DSP.OPEN.reduce((b, o, i) => (Math.abs(m - o) < Math.abs(m - DSP.OPEN[b]) ? i : b), 0);
     last = tgt; const c = (m - DSP.OPEN[tgt]) * 100;
     $('#needle').style.transform = `rotate(${clamp(c, -50, 50) * 1.6}deg)`;
-    $('#tn').textContent = STRING_NAMES[tgt]; $('#tn').className = 'nn ' + (Math.abs(c) <= 5 ? 'c-ok' : c < 0 ? 'c-low' : 'c-high');
+    $('#tn').textContent = ['low E', 'A', 'D', 'G', 'B', 'high E'][tgt]; $('#tn').className = 'nn ' + (Math.abs(c) <= 5 ? 'c-ok' : c < 0 ? 'c-low' : 'c-high');
     $('#tc').textContent = `string ${6 - tgt} · you're on ${DSP.name(m)} · ${centsTxt(c)}${how ? ' · ' + how : ''}`;
     const th = $('#th');
     if (Math.abs(c) > 350) { th.textContent = 'Far off — is this the right string?'; th.className = 'hint'; }
